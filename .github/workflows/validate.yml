@@ -1,0 +1,21 @@
+name: Validate portfolio
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check JavaScript syntax
+        run: node --check app.js
+      - name: Validate portfolio data
+        run: |
+          node -e "const fs=require('node:fs'); for (const f of ['data/profile.json','data/projects.json','data/skills.json','data/journey.json']) { JSON.parse(fs.readFileSync(f,'utf8')); console.log('Valid JSON:', f); }"
