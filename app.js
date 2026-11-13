@@ -46,7 +46,14 @@
       row.append(node("b", "", "✓"), node("span", "", item));
       highlights.append(row);
     });
-    $("#email-link").href = "mailto:" + (p.email || "contact@elmi-portfolio.fr");
+    const emailLink = $("#email-link");
+    if (p.email) {
+      emailLink.href = "mailto:" + p.email;
+      emailLink.textContent = "Écrire un message ↗";
+    } else {
+      emailLink.href = "#investors";
+      emailLink.textContent = "Utiliser le formulaire de contact ↗";
+    }
     const socials = $("#social-links");
     socials.replaceChildren();
     (p.socials || []).forEach(s => {
@@ -214,7 +221,11 @@
     $("#investor-form").addEventListener("submit", event => {
       event.preventDefault();
       const form = new FormData(event.currentTarget);
-      const email = state.profile.email || "contact@elmi-portfolio.fr";
+      const email = state.profile.email;
+      if (!email) {
+        $("#investor-result").textContent = "Adresse de réception non configurée. Ajoute ton adresse professionnelle dans data/profile.json pour activer l’envoi de la demande.";
+        return;
+      }
       const body = [
         "Manifestation d’intérêt — Portfolio El-Mihdhoir MOHAMED ALI", "",
         "Nom / organisation : " + form.get("name"),
