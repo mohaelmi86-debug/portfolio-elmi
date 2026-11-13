@@ -20,9 +20,12 @@
   function safeSavedSelection() {
     try {
       const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
-      if (Array.isArray(saved)) state.visible = new Set(saved);
-    } catch (_) { state.visible = new Set(); }
-    if (!state.visible.size) state.visible = new Set(state.projects.map(p => p.id));
+      if (Array.isArray(saved)) {
+        state.visible = new Set(saved);
+        return;
+      }
+    } catch (_) { /* Utilise la sélection par défaut */ }
+    state.visible = new Set(state.projects.map(p => p.id));
   }
   function iconFor(project) {
     const cat = String(project.category || "").split(/[·–-]/)[0].trim();
