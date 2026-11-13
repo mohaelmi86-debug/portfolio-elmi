@@ -26,7 +26,8 @@ jobs:
               "data/profile.xml",
               "data/projects.xml",
               "data/skills.xml",
-              "data/journey.xml",\n              "data/formations.xml",
+              "data/journey.xml",
+              "data/formations.xml",
           ]
           for filename in files:
               root = ET.parse(Path(filename)).getroot()
