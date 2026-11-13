@@ -4,19 +4,11 @@
   "headline": "Concepteur de solutions numériques & IA",
   "intro": "Du laboratoire à l’innovation digitale : je transforme les défis métier en solutions concrètes, utiles et responsables. Mon profil relie expertise terrain, conception produit et technologies émergentes.",
   "location": "Massy, France",
-  "email": "contact@elmi-portfolio.fr",
+  "email": "",
   "socials": [
     {
       "label": "GitHub",
       "url": "https://github.com/mohaelmi86-debug"
-    },
-    {
-      "label": "LinkedIn",
-      "url": "https://www.linkedin.com/"
-    },
-    {
-      "label": "Notion",
-      "url": "https://www.notion.so/"
     }
   ],
   "highlights": [
