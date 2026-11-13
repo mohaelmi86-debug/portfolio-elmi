@@ -2,9 +2,9 @@
 <formations>
   <formation id="uncode-school">
     <name>Uncode School</name>
-    <type>Formation professionnelle</type>
+    <type>Product Builder — No-Code &amp; IA</type>
     <status>En cours</status>
     <period>En cours</period>
-    <description>Formation actuellement suivie chez Uncode School. Les modules, objectifs pédagogiques et compétences abordés seront précisés à partir du programme de formation.</description>
+    <description>Formation en cours chez Uncode School pour apprendre à concevoir, prototyper et construire des produits numériques en mobilisant les outils no-code et l’intelligence artificielle, de l’identification du besoin jusqu’au développement d’une solution fonctionnelle.</description>
   </formation>
 </formations>
