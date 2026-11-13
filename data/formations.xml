@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<formations>
+  <formation id="uncode-school">
+    <name>Uncode School</name>
+    <type>Formation professionnelle</type>
+    <status>En cours</status>
+    <period>En cours</period>
+    <description>Formation actuellement suivie chez Uncode School. Les modules, objectifs pédagogiques et compétences abordés seront précisés à partir du programme de formation.</description>
+  </formation>
+</formations>
