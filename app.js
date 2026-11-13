@@ -312,7 +312,8 @@
       state.projects = parseProjects(projectsXML);
       state.skills = parseSkills(skillsXML);
       state.journey = parseJourney(journeyXML);
-      safeSavedSelection(); renderProfile(); renderSkills(); renderJourney(); buildFilters(); renderPicker(); renderProjects(); populateInvestorProjects(); bindInteractions();
+      state.trainings = parseTrainings(trainingsXML);
+      safeSavedSelection(); renderProfile(); renderSkills(); renderJourney(); renderTrainings(); buildFilters(); renderPicker(); renderProjects(); populateInvestorProjects(); bindInteractions();
       $("#year").textContent = new Date().getFullYear();
     } catch (error) {
       console.error(error);
