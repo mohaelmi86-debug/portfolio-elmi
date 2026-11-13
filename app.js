@@ -2,7 +2,7 @@
   "use strict";
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-  const state = { profile: null, projects: [], skills: [], journey: [], category: "Tous", query: "", visible: new Set() };
+  const state = { profile: null, projects: [], skills: [], journey: [], trainings: [], category: "Tous", query: "", visible: new Set() };
   const storageKey = "portfolio-elmi-visible-projects-v1";
   const icons = { Finance:"▥", Lecture:"▣", Industrie:"⚙", Éducation:"✦", Commerce:"◇", Laboratoire:"⌕", Santé:"✚", Fintech:"◈", Impact:"♻", Construction:"⌂", Data:"⌗", Innovation:"✧" };
 
@@ -41,6 +41,16 @@
   function parseSkills(xml) {
     return [...xml.querySelectorAll("skill-groups > group")].map(group => ({
       group: xmlText(group, "name"), items: xmlItems(group, "items > item")
+    }));
+  }
+  function parseTrainings(xml) {
+    return [...xml.querySelectorAll("formations > formation")].map(item => ({
+      id: item.getAttribute("id") || "",
+      name: xmlText(item, "name"),
+      type: xmlText(item, "type"),
+      status: xmlText(item, "status"),
+      period: xmlText(item, "period"),
+      description: xmlText(item, "description")
     }));
   }
   function parseJourney(xml) {
@@ -221,6 +231,21 @@
       root.append(item);
     });
   }
+  function renderTrainings() {
+    const root = $("#training-list");
+    root.replaceChildren();
+    state.trainings.forEach(training => {
+      const card = node("article", "training-card");
+      const top = node("div", "training-card-top");
+      top.append(node("span", "training-icon", "✦"), node("span", "training-status", training.status || "Formation"));
+      card.append(top);
+      card.append(node("h3", "", training.name));
+      if (training.type) card.append(node("div", "training-type", training.type));
+      if (training.period) card.append(node("div", "training-period", training.period));
+      card.append(node("p", "", training.description));
+      root.append(card);
+    });
+  }
   function populateInvestorProjects() {
     const select = $("#investor-project");
     state.projects.forEach(project => {
@@ -280,8 +305,8 @@
   }
   async function init() {
     try {
-      const [profileXML, projectsXML, skillsXML, journeyXML] = await Promise.all([
-        loadXML("data/profile.xml"), loadXML("data/projects.xml"), loadXML("data/skills.xml"), loadXML("data/journey.xml")
+      const [profileXML, projectsXML, skillsXML, journeyXML, trainingsXML] = await Promise.all([
+        loadXML("data/profile.xml"), loadXML("data/projects.xml"), loadXML("data/skills.xml"), loadXML("data/journey.xml"), loadXML("data/formations.xml")
       ]);
       state.profile = parseProfile(profileXML);
       state.projects = parseProjects(projectsXML);
