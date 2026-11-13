@@ -16,6 +16,22 @@ jobs:
           node-version: 22
       - name: Check JavaScript syntax
         run: node --check app.js
-      - name: Validate portfolio data
+      - name: Validate XML content files
         run: |
-          node -e "const fs=require('node:fs'); for (const f of ['data/profile.json','data/projects.json','data/skills.json','data/journey.json']) { JSON.parse(fs.readFileSync(f,'utf8')); console.log('Valid JSON:', f); }"
+          python - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          files = [
+              "data/profile.xml",
+              "data/projects.xml",
+              "data/skills.xml",
+              "data/journey.xml",
+          ]
+          for filename in files:
+              root = ET.parse(Path(filename)).getroot()
+              print(f"Valid XML: {filename} ({root.tag})")
+          projects = ET.parse("data/projects.xml").getroot().findall("project")
+          assert len(projects) >= 1, "No project found in projects.xml"
+          print(f"Project records: {len(projects)}")
+          PY
