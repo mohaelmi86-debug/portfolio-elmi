@@ -1,0 +1,22 @@
+[
+  {
+    "title": "Expertise terrain",
+    "date": "Expérience professionnelle",
+    "description": "Laboratoire d’analyse industrielle, amiante, métrologie, maintenance et exigences qualité."
+  },
+  {
+    "title": "Culture qualité & conformité",
+    "date": "Parcours métier",
+    "description": "Approche structurée des procédures, de la traçabilité et des audits, avec une attention particulière aux exigences COFRAC."
+  },
+  {
+    "title": "Développement numérique",
+    "date": "Évolution technique",
+    "description": "Exploration des architectures web, applications métier, bases de données et plateformes SaaS."
+  },
+  {
+    "title": "IA & innovation produit",
+    "date": "Aujourd’hui",
+    "description": "Conception de produits intégrant IA, automatisation et expériences utilisateur adaptées aux usages réels."
+  }
+]
