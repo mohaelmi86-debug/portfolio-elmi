@@ -6,10 +6,48 @@
   const storageKey = "portfolio-elmi-visible-projects-v1";
   const icons = { Finance:"▥", Lecture:"▣", Industrie:"⚙", Éducation:"✦", Commerce:"◇", Laboratoire:"⌕", Santé:"✚", Fintech:"◈", Impact:"♻", Construction:"⌂", Data:"⌗", Innovation:"✧" };
 
-  async function loadData(path) {
+  async function loadXML(path) {
     const response = await fetch(path, { cache: "no-store" });
     if (!response.ok) throw new Error("Impossible de charger " + path + " (" + response.status + ")");
-    return response.json();
+    const source = await response.text();
+    const documentXML = new DOMParser().parseFromString(source, "application/xml");
+    if (documentXML.querySelector("parsererror")) throw new Error("XML invalide : " + path);
+    return documentXML;
+  }
+  const xmlText = (root, selector) => root.querySelector(selector)?.textContent.trim() || "";
+  const xmlItems = (root, selector) => [...root.querySelectorAll(selector)].map(item => item.textContent.trim());
+  function parseProfile(xml) {
+    const root = xml.documentElement;
+    return {
+      name: xmlText(root, "name"), shortName: xmlText(root, "shortName"),
+      headline: xmlText(root, "headline"), intro: xmlText(root, "intro"),
+      location: xmlText(root, "location"), email: xmlText(root, "email"),
+      approach: xmlText(root, "approach"), highlights: xmlItems(root, "highlights > item"),
+      socials: [...root.querySelectorAll("socials > social")].map(s => ({
+        label: xmlText(s, "label"), url: xmlText(s, "url")
+      }))
+    };
+  }
+  function parseProjects(xml) {
+    return [...xml.querySelectorAll("projects > project")].map(p => ({
+      id: p.getAttribute("id") || "", name: xmlText(p, "name"),
+      category: xmlText(p, "category"), status: xmlText(p, "status"),
+      description: xmlText(p, "description"), lead: xmlText(p, "lead"),
+      problem: xmlText(p, "problem"), features: xmlItems(p, "features > item"),
+      tech: xmlItems(p, "technologies > item"), business: xmlText(p, "businessModel"),
+      next: xmlText(p, "nextSteps"), tags: xmlItems(p, "tags > item")
+    }));
+  }
+  function parseSkills(xml) {
+    return [...xml.querySelectorAll("skill-groups > group")].map(group => ({
+      group: xmlText(group, "name"), items: xmlItems(group, "items > item")
+    }));
+  }
+  function parseJourney(xml) {
+    return [...xml.querySelectorAll("journey > step")].map(step => ({
+      title: xmlText(step, "title"), date: xmlText(step, "date"),
+      description: xmlText(step, "description")
+    }));
   }
   const node = (tag, className, text) => {
     const el = document.createElement(tag);
@@ -242,15 +280,18 @@
   }
   async function init() {
     try {
-      const [profile, projects, skills, journey] = await Promise.all([
-        loadData("data/profile.json"), loadData("data/projects.json"), loadData("data/skills.json"), loadData("data/journey.json")
+      const [profileXML, projectsXML, skillsXML, journeyXML] = await Promise.all([
+        loadXML("data/profile.xml"), loadXML("data/projects.xml"), loadXML("data/skills.xml"), loadXML("data/journey.xml")
       ]);
-      state.profile = profile; state.projects = projects; state.skills = skills; state.journey = journey;
+      state.profile = parseProfile(profileXML);
+      state.projects = parseProjects(projectsXML);
+      state.skills = parseSkills(skillsXML);
+      state.journey = parseJourney(journeyXML);
       safeSavedSelection(); renderProfile(); renderSkills(); renderJourney(); buildFilters(); renderPicker(); renderProjects(); populateInvestorProjects(); bindInteractions();
       $("#year").textContent = new Date().getFullYear();
     } catch (error) {
       console.error(error);
-      $("#project-grid").replaceChildren(node("p", "empty-state", "Le portfolio n’a pas pu charger ses données. Vérifie que les fichiers du dossier data sont publiés avec le site."));
+      $("#project-grid").replaceChildren(node("p", "empty-state", "Le portfolio n’a pas pu charger ses données XML. Vérifie les fichiers du dossier data."));
       $("#no-projects").hidden = true;
     }
   }
