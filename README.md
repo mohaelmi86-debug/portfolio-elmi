@@ -25,7 +25,7 @@ Portfolio statique et dynamique, géré par GitHub. Le site charge ses contenus 
 - Recherche textuelle et filtres par catégorie.
 - Sélection des projets à afficher, mémorisée dans le navigateur.
 - Fiches projet détaillées : besoin, fonctionnalités, technologies, modèle économique et prochaines étapes.
-- Compétences et parcours chargés depuis leurs propres fichiers XML.
+- Compétences, parcours et formations chargés depuis leurs propres fichiers XML.
 - Interface responsive, navigation mobile et fiches modales.
 - Formulaire de manifestation d’intérêt : prépare un e-mail lorsque l’adresse de réception est renseignée dans `data/profile.xml`.
 
