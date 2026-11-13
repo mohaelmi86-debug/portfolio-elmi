@@ -1,0 +1,49 @@
+[
+  {
+    "group": "Conception & produit",
+    "items": [
+      "Cadrage fonctionnel",
+      "Product design",
+      "Prototypage",
+      "Documentation produit",
+      "Gestion de projet numérique"
+    ]
+  },
+  {
+    "group": "IA & données",
+    "items": [
+      "IA générative",
+      "OCR documentaire",
+      "Assistants IA",
+      "Automatisation",
+      "Python",
+      "SQL",
+      "Analyse de données"
+    ]
+  },
+  {
+    "group": "Développement & architecture",
+    "items": [
+      "React",
+      "TypeScript",
+      "Node.js",
+      "FastAPI",
+      "PostgreSQL",
+      "Supabase",
+      "SaaS multi-tenant",
+      "No-code / Low-code"
+    ]
+  },
+  {
+    "group": "Métier & qualité",
+    "items": [
+      "Laboratoire d’analyse",
+      "Amiante",
+      "Métrologie",
+      "Qualité",
+      "COFRAC",
+      "Traçabilité",
+      "Gestion des habilitations"
+    ]
+  }
+]
