@@ -1,0 +1,29 @@
+{
+  "name": "El-Mihdhoir MOHAMED ALI",
+  "shortName": "Elmi",
+  "headline": "Concepteur de solutions numériques & IA",
+  "intro": "Du laboratoire à l’innovation digitale : je transforme les défis métier en solutions concrètes, utiles et responsables. Mon profil relie expertise terrain, conception produit et technologies émergentes.",
+  "location": "Massy, France",
+  "email": "contact@elmi-portfolio.fr",
+  "socials": [
+    {
+      "label": "GitHub",
+      "url": "https://github.com/mohaelmi86-debug"
+    },
+    {
+      "label": "LinkedIn",
+      "url": "https://www.linkedin.com/"
+    },
+    {
+      "label": "Notion",
+      "url": "https://www.notion.so/"
+    }
+  ],
+  "highlights": [
+    "Technicien / analyste de laboratoire — amiante, métrologie, qualité et COFRAC",
+    "Conception de solutions web, SaaS et applications métier",
+    "Agents IA, OCR, automatisation et assistants intelligents",
+    "Gestion de projets numériques, de l’idée au prototype"
+  ],
+  "approach": "Je transforme des besoins opérationnels en solutions numériques structurées. Mon fil conducteur : rendre les outils plus simples, fiables, accessibles et utiles aux utilisateurs."
+}
