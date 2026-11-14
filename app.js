@@ -99,7 +99,7 @@
       a.href = s.url; a.target = "_blank"; a.rel = "noopener noreferrer";
       socials.append(a);
     });
-    document.title = (p.name || "Portfolio") + " — Portfolio";
+    document.title = (p.name || "Portfolio") + " — Product Builder No-Code & IA";
   }
   function renderSkills() {
     const grid = $("#skills-grid");

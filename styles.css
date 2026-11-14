@@ -35,3 +35,5 @@ body.modal-open{overflow:hidden}
   .hero-visual{max-width:100%;overflow:hidden}
   .project-toolbar{gap:14px}
 }
+
+.privacy-note{font-size:11px;line-height:1.55;color:#53617d;background:#f4f6fc;border-left:3px solid #6555d8;padding:10px 12px;border-radius:0 8px 8px 0;margin:0}
