@@ -1,38 +1,73 @@
 name: Validate portfolio
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
+
       - name: Check JavaScript syntax
         run: node --check app.js
-      - name: Validate XML content files
+
+      - name: Validate XML data and project records
         run: |
           python - <<'PY'
           from pathlib import Path
           import xml.etree.ElementTree as ET
 
-          files = [
+          xml_files = [
               "data/profile.xml",
               "data/projects.xml",
               "data/skills.xml",
               "data/journey.xml",
               "data/formations.xml",
           ]
-          for filename in files:
+          for filename in xml_files:
               root = ET.parse(Path(filename)).getroot()
               print(f"Valid XML: {filename} ({root.tag})")
-          projects = ET.parse("data/projects.xml").getroot().findall("project")
-          assert len(projects) >= 1, "No project found in projects.xml"
-          print(f"Project records: {len(projects)}")
+
+          projects_root = ET.parse("data/projects.xml").getroot()
+          projects = projects_root.findall("project")
+          assert projects, "No project found in projects.xml"
+
+          ids = [project.get("id", "").strip() for project in projects]
+          assert all(ids), "Every project must have a non-empty id"
+          assert len(ids) == len(set(ids)), "Project ids must be unique"
+
+          required_fields = ("name", "category", "status", "description")
+          for project in projects:
+              for field in required_fields:
+                  value = project.findtext(field, default="").strip()
+                  assert value, f"Project {project.get('id')} is missing {field}"
+
+          print(f"Validated {len(projects)} projects with unique ids.")
+
+          html = Path("index.html").read_text(encoding="utf-8")
+          for marker in (
+              '<html lang="fr">',
+              'id="main-content"',
+              'class="skip-link"',
+              'rel="canonical"',
+              'application/ld+json',
+          ):
+              assert marker in html, f"Missing HTML/SEO marker: {marker}"
+
+          for asset in ("styles.css", "app.js", "favicon.svg", "robots.txt", "sitemap.xml"):
+              assert Path(asset).is_file(), f"Referenced public asset is missing: {asset}"
+
+          sitemap = ET.parse("sitemap.xml").getroot()
+          assert sitemap.tag.endswith("urlset"), "sitemap.xml must contain a urlset"
+          print("HTML/SEO invariants and public assets validated.")
           PY

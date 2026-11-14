@@ -2,12 +2,12 @@
   "use strict";
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-  const state = { profile: null, projects: [], skills: [], journey: [], trainings: [], category: "Tous", query: "", visible: new Set() };
-  const storageKey = "portfolio-elmi-visible-projects-v1";
+  const state = { profile: null, projects: [], skills: [], journey: [], trainings: [], category: "Tous", query: "" };
+  let lastFocusedElement = null;
   const icons = { Finance:"▥", Lecture:"▣", Industrie:"⚙", Éducation:"✦", Commerce:"◇", Laboratoire:"⌕", Santé:"✚", Fintech:"◈", Impact:"♻", Construction:"⌂", Data:"⌗", Innovation:"✧" };
 
   async function loadXML(path) {
-    const response = await fetch(path, { cache: "no-store" });
+    const response = await fetch(path);
     if (!response.ok) throw new Error("Impossible de charger " + path + " (" + response.status + ")");
     const source = await response.text();
     const documentXML = new DOMParser().parseFromString(source, "application/xml");
@@ -65,16 +65,6 @@
     if (text !== undefined) el.textContent = text;
     return el;
   };
-  function safeSavedSelection() {
-    try {
-      const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
-      if (Array.isArray(saved)) {
-        state.visible = new Set(saved);
-        return;
-      }
-    } catch (_) { /* Utilise la sélection par défaut */ }
-    state.visible = new Set(state.projects.map(p => p.id));
-  }
   function iconFor(project) {
     const cat = String(project.category || "").split(/[·–-]/)[0].trim();
     return icons[cat] || "✦";
@@ -83,7 +73,7 @@
     return String(project.category || "Autres").split(/[·–-]/)[0].trim();
   }
   function renderProfile() {
-    const p = state.profile;
+    const p = state.profile || {};
     $("#hero-headline").textContent = p.headline || "Concepteur de solutions numériques & IA";
     $("#hero-intro").textContent = p.intro || "";
     $("#profile-approach").textContent = p.approach || "";
@@ -138,38 +128,19 @@
       root.append(button);
     });
   }
-  function renderPicker() {
-    const root = $("#project-picker");
-    root.replaceChildren();
-    state.projects.forEach(project => {
-      const label = node("label", "project-option");
-      const input = document.createElement("input");
-      input.type = "checkbox"; input.checked = state.visible.has(project.id);
-      input.addEventListener("change", () => {
-        if (input.checked) state.visible.add(project.id); else state.visible.delete(project.id);
-        persistSelection(); renderProjects(); updateSelectionCount();
-      });
-      label.append(input, node("span", "", project.name)); root.append(label);
-    });
-    updateSelectionCount();
-  }
-  function updateSelectionCount() {
-    $("#selection-count").textContent = state.visible.size + " / " + state.projects.length + " projets sélectionnés";
-  }
-  function persistSelection() {
-    try { localStorage.setItem(storageKey, JSON.stringify([...state.visible])); } catch (_) { /* Stockage facultatif */ }
-  }
   function renderProjects() {
     const grid = $("#project-grid");
     grid.replaceChildren();
     const query = state.query.trim().toLocaleLowerCase("fr");
     const matches = state.projects.filter(p => {
-      const searchable = [p.name, p.category, p.description, p.lead, ...(p.tags || [])].join(" ").toLocaleLowerCase("fr");
-      return state.visible.has(p.id) && (state.category === "Tous" || categoryName(p) === state.category) && (!query || searchable.includes(query));
+      const searchable = [
+        p.name, p.category, p.status, p.description, p.lead, p.problem,
+        p.business, p.next, ...(p.features || []), ...(p.tech || []), ...(p.tags || [])
+      ].join(" ").toLocaleLowerCase("fr");
+      return (state.category === "Tous" || categoryName(p) === state.category) && (!query || searchable.includes(query));
     });
     matches.forEach(project => grid.append(createProjectCard(project)));
     $("#no-projects").hidden = matches.length > 0;
-    if (!matches.length) grid.append(node("div", "loading", ""));
   }
   function createProjectCard(project) {
     const card = node("article", "project-card");
@@ -212,13 +183,18 @@
       detailBlock("Modèle économique", project.business),
       detailBlock("Prochaines étapes", project.next)
     );
+    lastFocusedElement = document.activeElement;
     $("#project-modal").hidden = false;
-    document.body.style.overflow = "hidden";
+    document.body.classList.add("modal-open");
     $("#modal-close").focus();
   }
   function closeProject() {
     $("#project-modal").hidden = true;
-    document.body.style.overflow = "";
+    document.body.classList.remove("modal-open");
+    if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
+      lastFocusedElement.focus({ preventScroll: true });
+    }
+    lastFocusedElement = null;
   }
   function renderJourney() {
     const root = $("#journey-list"); root.replaceChildren();
@@ -257,22 +233,31 @@
     $("#project-search").addEventListener("input", event => {
       state.query = event.target.value; renderProjects();
     });
-    $("#toggle-customizer").addEventListener("click", () => {
-      const panel = $("#customizer-content"), open = panel.hidden;
-      panel.hidden = !open;
-      $("#toggle-customizer").setAttribute("aria-expanded", String(open));
-      $("#toggle-customizer").innerHTML = open ? "Masquer la sélection <span>−</span>" : "Gérer ma sélection <span>＋</span>";
-    });
-    $("#select-all").addEventListener("click", () => {
-      state.visible = new Set(state.projects.map(p => p.id)); persistSelection(); renderPicker(); renderProjects();
-    });
-    $("#reset-selection").addEventListener("click", () => {
-      state.visible = new Set(state.projects.map(p => p.id)); persistSelection(); renderPicker(); renderProjects();
-      state.category = "Tous"; buildFilters();
-    });
     $("#modal-close").addEventListener("click", closeProject);
     $("#project-modal").addEventListener("click", event => { if (event.target === $("#project-modal")) closeProject(); });
-    document.addEventListener("keydown", event => { if (event.key === "Escape" && !$("#project-modal").hidden) closeProject(); });
+    document.addEventListener("keydown", event => {
+      const modal = $("#project-modal");
+      if (modal.hidden) return;
+      if (event.key === "Escape") {
+        closeProject();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = $$("button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])", modal)
+        .filter(element => element.getClientRects().length > 0);
+      if (!focusable.length) {
+        event.preventDefault();
+        return;
+      }
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
     $("#mobile-menu").addEventListener("click", () => {
       const menu = $("#mobile-nav"), open = menu.classList.toggle("open");
       $("#mobile-menu").setAttribute("aria-expanded", String(open));
@@ -286,7 +271,7 @@
       const form = new FormData(event.currentTarget);
       const email = state.profile.email;
       if (!email) {
-        $("#investor-result").textContent = "Adresse de réception non configurée. Ajoute ton adresse professionnelle dans data/profile.json pour activer l’envoi de la demande.";
+        $("#investor-result").textContent = "Adresse de réception non configurée. Ajoute ton adresse professionnelle dans data/profile.xml pour préparer le message.";
         return;
       }
       const body = [
@@ -299,27 +284,47 @@
         "Délai : " + form.get("timing"),
         "Message : " + (form.get("message") || "—")
       ].join("\n");
-      $("#investor-result").textContent = "Votre application e-mail va s’ouvrir avec votre demande préremplie. Vérifiez l’adresse destinataire avant l’envoi.";
+      $("#investor-result").textContent = "Ton application e-mail va s’ouvrir avec le message prérempli. Rien n’est envoyé automatiquement : vérifie le destinataire puis envoie le message depuis ta messagerie.";
       window.location.href = "mailto:" + encodeURIComponent(email) + "?subject=" + encodeURIComponent("Intérêt — " + form.get("project")) + "&body=" + encodeURIComponent(body);
     });
   }
   async function init() {
-    try {
-      const [profileXML, projectsXML, skillsXML, journeyXML, trainingsXML] = await Promise.all([
-        loadXML("data/profile.xml"), loadXML("data/projects.xml"), loadXML("data/skills.xml"), loadXML("data/journey.xml"), loadXML("data/formations.xml")
-      ]);
-      state.profile = parseProfile(profileXML);
-      state.projects = parseProjects(projectsXML);
-      state.skills = parseSkills(skillsXML);
-      state.journey = parseJourney(journeyXML);
-      state.trainings = parseTrainings(trainingsXML);
-      safeSavedSelection(); renderProfile(); renderSkills(); renderJourney(); renderTrainings(); buildFilters(); renderPicker(); renderProjects(); populateInvestorProjects(); bindInteractions();
-      $("#year").textContent = new Date().getFullYear();
-    } catch (error) {
-      console.error(error);
-      $("#project-grid").replaceChildren(node("p", "empty-state", "Le portfolio n’a pas pu charger ses données XML. Vérifie les fichiers du dossier data."));
-      $("#no-projects").hidden = true;
+    const sources = [
+      { path: "data/profile.xml", apply: xml => { state.profile = parseProfile(xml); } },
+      { path: "data/projects.xml", apply: xml => { state.projects = parseProjects(xml); } },
+      { path: "data/skills.xml", apply: xml => { state.skills = parseSkills(xml); } },
+      { path: "data/journey.xml", apply: xml => { state.journey = parseJourney(xml); } },
+      { path: "data/formations.xml", apply: xml => { state.trainings = parseTrainings(xml); } }
+    ];
+    const failed = [];
+    await Promise.all(sources.map(async source => {
+      try {
+        source.apply(await loadXML(source.path));
+      } catch (error) {
+        failed.push(source.path);
+        console.error("Chargement partiel du portfolio :", error);
+      }
+    }));
+
+    renderProfile();
+    renderSkills();
+    renderJourney();
+    renderTrainings();
+    buildFilters();
+    renderProjects();
+    populateInvestorProjects();
+    bindInteractions();
+
+    if (!state.projects.length) {
+      $("#no-projects").textContent = failed.includes("data/projects.xml")
+        ? "Les projets sont temporairement indisponibles. Réessaie dans quelques instants."
+        : "Aucun projet n’est disponible pour le moment.";
+      $("#no-projects").hidden = false;
     }
+    if (failed.length) {
+      console.warn("Certaines données n’ont pas pu être chargées :", failed.join(", "));
+    }
+    $("#year").textContent = new Date().getFullYear();
   }
   init();
 })();

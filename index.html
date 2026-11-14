@@ -3,23 +3,53 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#09142b">
-  <meta name="description" content="El-Mihdhoir MOHAMED ALI — Concepteur de solutions numériques, produits SaaS et IA.">
-  <title>El-Mihdhoir MOHAMED ALI — Portfolio</title>
+  <meta name="description" content="El-Mihdhoir Mohamed Ali, Product Builder No-Code & IA : conception de produits numériques, automatisation, applications métier et solutions SaaS.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://elmihdhoirmohamedali.netlify.app/">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:title" content="El-Mihdhoir Mohamed Ali — Product Builder No-Code & IA">
+  <meta property="og:description" content="Conception de produits numériques, automatisation, applications métier et solutions SaaS.">
+  <meta property="og:url" content="https://elmihdhoirmohamedali.netlify.app/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="El-Mihdhoir Mohamed Ali — Product Builder No-Code & IA">
+  <meta name="twitter:description" content="Conception de produits numériques, automatisation, applications métier et solutions SaaS.">
+  <title>El-Mihdhoir Mohamed Ali — Product Builder No-Code & IA</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "El-Mihdhoir Mohamed Ali",
+    "jobTitle": "Product Builder No-Code & IA",
+    "description": "Conception de produits numériques, automatisation, applications métier et solutions SaaS, avec une expérience en laboratoire d’analyses industrielles, amiante, métrologie et qualité.",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Massy",
+      "addressCountry": "FR"
+    },
+    "sameAs": [
+      "https://github.com/mohaelmi86-debug",
+      "https://www.linkedin.com/in/mohamedalielmihdhoir"
+    ]
+  }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script src="app.js" defer></script>
 </head>
 <body>
+<a class="skip-link" href="#main-content">Aller au contenu principal</a>
 <header class="site-header"><div class="container nav">
   <a class="brand" href="#home" aria-label="Accueil">E<span>.</span> MA</a>
-  <nav class="nav-links" aria-label="Navigation principale"><a href="#about">À propos</a><a href="#capabilities">Capacités</a><a href="#projects">Projets</a><a href="#journey">Parcours</a><a href="#training">Formation</a><a href="#investors">Investisseurs</a></nav>
+  <nav class="nav-links" aria-label="Navigation principale"><a href="#about">À propos</a><a href="#capabilities">Capacités</a><a href="#projects">Projets</a><a href="#journey">Parcours</a><a href="#training">Formation</a><a href="#investors">Collaboration</a></nav>
   <a class="nav-cta" href="#contact">Me contacter <span>↗</span></a>
-  <button class="mobile-menu" id="mobile-menu" aria-expanded="false" aria-label="Ouvrir le menu">☰</button>
-</div><nav class="mobile-nav" id="mobile-nav" aria-label="Menu mobile"><a href="#about">À propos</a><a href="#capabilities">Capacités</a><a href="#projects">Projets</a><a href="#journey">Parcours</a><a href="#training">Formation</a><a href="#investors">Investisseurs</a><a href="#contact">Contact</a></nav></header>
-<main>
+  <button class="mobile-menu" id="mobile-menu" aria-expanded="false" aria-controls="mobile-nav" aria-label="Ouvrir le menu">☰</button>
+</div><nav class="mobile-nav" id="mobile-nav" aria-label="Menu mobile"><a href="#about">À propos</a><a href="#capabilities">Capacités</a><a href="#projects">Projets</a><a href="#journey">Parcours</a><a href="#training">Formation</a><a href="#investors">Collaboration</a><a href="#contact">Contact</a></nav></header>
+<main id="main-content">
 <section class="hero" id="home"><div class="container hero-grid">
- <div class="hero-copy"><div class="eyebrow"><span class="live-dot"></span> Portfolio professionnel · Innovation numérique & IA</div>
+ <div class="hero-copy"><div class="eyebrow"><span class="live-dot"></span> Portfolio professionnel · Product Builder No-Code & IA</div>
  <h1>El-Mihdhoir<br><span>MOHAMED ALI</span></h1><div class="hero-role" id="hero-headline">Concepteur de solutions numériques & IA</div>
  <p class="hero-intro" id="hero-intro">Du laboratoire à l’innovation digitale : je transforme les défis métier en solutions concrètes, utiles et responsables.</p>
  <div class="hero-pills"><span>Expertise terrain</span><span>Produit & SaaS</span><span>IA & Data</span></div>
@@ -32,12 +62,11 @@
 <section class="section projects-section" id="projects"><div class="container">
  <div class="section-heading"><div><div class="section-kicker">03 / Portfolio</div><h2>Projets <span>sélectionnés</span></h2></div><p>Des initiatives qui répondent à des problématiques métier, éducatives, industrielles et sociétales.</p></div>
  <div class="project-toolbar"><label class="search-box"><span>⌕</span><input id="project-search" type="search" placeholder="Rechercher un projet…" aria-label="Rechercher un projet"></label><div id="category-filters" class="filter-list" aria-label="Filtrer par catégorie"></div></div>
- <div class="customize-panel"><div><strong>Personnaliser les projets affichés</strong><p>Choisis les projets que tu souhaites mettre en avant sur cette version publique.</p></div><button class="text-button" id="toggle-customizer" aria-expanded="false">Gérer ma sélection <span>＋</span></button><div class="customizer-content" id="customizer-content" hidden><div class="customizer-actions"><button id="select-all" type="button">Tout afficher</button><button id="reset-selection" type="button">Réinitialiser</button></div><div id="project-picker" class="project-picker"></div><p class="small-note" id="selection-count" aria-live="polite"></p></div></div>
  <div id="project-grid" class="project-grid" aria-live="polite"><div class="loading">Chargement des projets…</div></div><p id="no-projects" class="empty-state" hidden>Aucun projet ne correspond à ta recherche.</p>
 </div></section>
 <section class="section journey-section" id="journey"><div class="container"><div class="section-heading"><div><div class="section-kicker">04 / Évolution</div><h2>Un parcours <span>en mouvement</span></h2></div><p>Une progression guidée par les besoins du terrain et l’envie de créer des solutions concrètes.</p></div><div id="journey-list" class="journey-list"></div></div></section>
 <section class="section training-section" id="training"><div class="container"><div class="section-heading"><div><div class="section-kicker">05 / Formation continue</div><h2>Apprendre, évoluer, <span>progresser</span></h2></div><p>Les formations qui accompagnent mon évolution professionnelle et mes projets numériques.</p></div><div id="training-list" class="training-list"></div></div></section>
-<section class="section investor-section" id="investors"><div class="container investor-grid"><div><div class="section-kicker">05 / Collaboration</div><h2>Faire grandir<br><span>les idées utiles.</span></h2><p>Ouvert aux échanges avec partenaires, structures, entrepreneurs et investisseurs intéressés par des projets numériques à impact.</p><div class="investor-points"><span>↗ Partenariats technologiques</span><span>↗ Expérimentation & pilotes</span><span>↗ Investissement & développement</span></div></div><form id="investor-form" class="investor-form"><h3>Manifester un intérêt</h3><p>Prépare une demande de contact autour d’un projet.</p><div class="form-grid">
+<section class="section investor-section" id="investors"><div class="container investor-grid"><div><div class="section-kicker">06 / Collaboration</div><h2>Faire grandir<br><span>les idées utiles.</span></h2><p>Ouvert aux échanges avec partenaires, structures, entrepreneurs et investisseurs intéressés par des projets numériques à impact.</p><div class="investor-points"><span>↗ Partenariats technologiques</span><span>↗ Expérimentation & pilotes</span><span>↗ Investissement & développement</span></div></div><form id="investor-form" class="investor-form"><h3>Préparer une prise de contact</h3><p>Décris brièvement ton besoin pour préparer un message adapté.</p><p class="form-note">Ce formulaire prépare un e-mail dans ton application de messagerie. Il ne transmet pas automatiquement les informations.</p><div class="form-grid">
 <label>Nom / organisation<input name="name" required autocomplete="name" placeholder="Votre nom"></label>
 <label>E-mail<input name="email" type="email" required autocomplete="email" placeholder="vous@exemple.com"></label>
 <label>Type d’intérêt<select name="interest"><option>Partenariat</option><option>Investissement</option><option>Collaboration</option><option>Accompagnement</option></select></label>
@@ -48,7 +77,7 @@
 <label class="consent full"><input type="checkbox" required>J’accepte que mes informations soient utilisées uniquement pour être recontacté au sujet de cette demande.</label>
 <button class="button primary full" type="submit">Préparer ma demande <b>↗</b></button><p id="investor-result" class="form-message full" aria-live="polite"></p>
 </div></form></div></section>
-<section class="contact-section" id="contact"><div class="container contact-card"><div><div class="section-kicker">06 / Contact</div><h2>Construisons quelque chose <span>d’utile.</span></h2><p>Projet, mission, partenariat ou idée à concrétiser : parlons-en.</p></div><div class="contact-actions"><a class="button primary" id="email-link" href="mailto:contact@elmi-portfolio.fr">Écrire un message ↗</a><div id="social-links" class="social-links"></div></div></div></section>
+<section class="contact-section" id="contact"><div class="container contact-card"><div><div class="section-kicker">07 / Contact</div><h2>Construisons quelque chose <span>d’utile.</span></h2><p>Projet, mission, partenariat ou idée à concrétiser : parlons-en.</p></div><div class="contact-actions"><a class="button primary" id="email-link" href="mailto:contact@elmi-portfolio.fr">Écrire un message ↗</a><div id="social-links" class="social-links"></div></div></div></section>
 </main>
 <footer><div class="container footer-content"><span>© <span id="year"></span> El-Mihdhoir MOHAMED ALI</span><span>Conception numérique · IA · Produits SaaS</span><a href="#home">Retour en haut ↑</a></div></footer>
 <div class="modal-backdrop" id="project-modal" hidden><section class="project-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-top"><span class="status-badge" id="modal-status">Projet</span><button id="modal-close" class="modal-close" aria-label="Fermer la fiche">×</button></div><div class="modal-category" id="modal-category"></div><h2 id="modal-title"></h2><p id="modal-lead" class="modal-lead"></p><div id="modal-tags" class="modal-tags"></div><div id="modal-details" class="modal-details"></div></section></div>

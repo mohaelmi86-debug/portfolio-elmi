@@ -1,6 +1,15 @@
 # Portfolio — El-Mihdhoir MOHAMED ALI
 
-Portfolio statique et dynamique, géré par GitHub. Le site charge ses contenus à partir de fichiers XML versionnés.
+Portfolio professionnel statique, versionné sur GitHub et publié avec Netlify.
+
+**Site public :** https://elmihdhoirmohamedali.netlify.app/  
+**Dépôt :** https://github.com/mohaelmi86-debug/portfolio-elmi
+
+## Positionnement
+
+Product Builder No-Code & IA — conception de produits numériques, automatisation, applications métier et solutions SaaS.
+
+Le portfolio présente également une expérience en laboratoire d’analyses industrielles, amiante, métrologie et qualité.
 
 ## Architecture
 
@@ -9,29 +18,36 @@ Portfolio statique et dynamique, géré par GitHub. Le site charge ses contenus 
 ├── index.html
 ├── styles.css
 ├── app.js
+├── favicon.svg
+├── _headers
+├── robots.txt
+├── sitemap.xml
 ├── netlify.toml
 ├── .github/workflows/validate.yml
 └── data/
     ├── profile.xml
     ├── projects.xml
     ├── skills.xml
-    └── journey.xml
+    ├── journey.xml
+    └── formations.xml
 ```
 
 ## Fonctionnalités
 
-- Chargement des contenus XML dans le navigateur via `fetch` et `DOMParser`.
-- Catalogue des projets généré dynamiquement depuis `data/projects.xml`.
-- Recherche textuelle et filtres par catégorie.
-- Sélection des projets à afficher, mémorisée dans le navigateur.
-- Fiches projet détaillées : besoin, fonctionnalités, technologies, modèle économique et prochaines étapes.
-- Compétences, parcours et formations chargés depuis leurs propres fichiers XML.
-- Interface responsive, navigation mobile et fiches modales.
-- Formulaire de manifestation d’intérêt : prépare un e-mail lorsque l’adresse de réception est renseignée dans `data/profile.xml`.
+- Contenus de profil, projets, compétences, parcours et formations stockés dans des fichiers XML.
+- Recherche plein texte dans les projets, leurs fonctionnalités, technologies et descriptions.
+- Filtres par catégorie.
+- Fiches projet détaillées dans une fenêtre modale accessible au clavier.
+- Navigation mobile et lien d’évitement vers le contenu principal.
+- Données structurées Person et métadonnées de partage.
+- Gestion de chargement partiel : l’indisponibilité d’un fichier XML ne bloque plus toutes les autres rubriques.
+- Le formulaire de collaboration prépare un e-mail via le logiciel de messagerie du visiteur ; il ne transmet pas les données automatiquement.
 
 ## Modifier le portfolio
 
-Modifier le fichier XML concerné dans `data/`, en respectant les balises existantes, puis commit/push sur `main`.
+Modifier le fichier XML concerné dans `data/`, en respectant les balises existantes, puis créer un commit sur une branche et ouvrir une Pull Request vers `main`.
+
+Les statuts doivent refléter l’avancement réel : concept, maquette, prototype, pilote ou production. Ne pas présenter une fonctionnalité planifiée comme déjà opérationnelle.
 
 Exemple pour ajouter un projet dans `data/projects.xml` :
 
@@ -51,19 +67,16 @@ Exemple pour ajouter un projet dans `data/projects.xml` :
 </project>
 ```
 
-GitHub Actions contrôle la syntaxe JavaScript et la validité des fichiers XML à chaque push et pull request.
+## Contrôles qualité
 
-## Déploiement Netlify
+GitHub Actions vérifie la syntaxe JavaScript, le XML des données, l’unicité des identifiants de projets et quelques invariants HTML/SEO à chaque push et Pull Request vers `main`.
 
-Le fichier `netlify.toml` configure la publication de la racine (`.`) sans commande de build.
+## Déploiement
 
-Le site Netlify existant `neon-madeleine-137c76` a un dernier déploiement manuel (source `drop`, sans commit Git). Pour que chaque commit GitHub mette automatiquement le site à jour, relier ce dépôt depuis Netlify :
-**Project configuration → Developer settings → Continuous deployment → Repository → Link repository**, puis choisir `mohaelmi86-debug/portfolio-elmi`, branche `main`.
+Le projet Netlify de production est `elmihdhoirmohamedali` et publie la racine du dépôt via `netlify.toml`.
 
-Tant que ce lien n'est pas établi, les changements sont bien présents dans GitHub mais pas encore publiés sur le site public.
+Les modifications préparées sur une branche GitHub ne remplacent pas encore le site public. Après validation et fusion dans `main`, Netlify devra publier le commit lorsque le quota de déploiement du compte sera de nouveau disponible.
 
-## À finaliser avant diffusion
+## Informations publiques
 
-- Ajouter l'adresse e-mail réelle dans `data/profile.xml` (balise `<email>`).
-- Compléter les URL professionnelles dans `<socials>`.
-- Vérifier les statuts et descriptions des projets avant chaque présentation publique.
+Les coordonnées et liens professionnels sont centralisés dans `data/profile.xml`. Vérifier toute modification avant publication.
