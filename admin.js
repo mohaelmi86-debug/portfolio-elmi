@@ -56,7 +56,7 @@ async function updateLead(id,patch,control){
   const {data:{session}}=await client.auth.getSession();if(!session)throw new Error("Session expirée.");
   const res=await fetch(`${cfg.supabaseUrl}/functions/v1/admin-leads`,{method:"PATCH",headers:{Authorization:`Bearer ${session.access_token}`,apikey:cfg.supabaseAnonKey,"Content-Type":"application/json"},body:JSON.stringify({id,...patch})});
   const body=await res.json();if(!res.ok)throw new Error(body.error||"Mise à jour impossible.");
-  feedback("load-message",patch.status?"Statut mis à jour.":"Notes enregistrées.");await loadLeads();
+  feedback("load-message",patch.status?"Statut mis à jour.":patch.pipeline_stage?"Étape commerciale mise à jour.":patch.next_action!==undefined?"Relance enregistrée.":"Notes enregistrées.");await loadLeads();
  }catch(e){feedback("load-message",e.message,true);control.disabled=false;}
 }
 $("login-form").addEventListener("submit",async e=>{e.preventDefault();if(!client){feedback("login-message","Configuration Supabase manquante dans admin-config.js.",true);return;}feedback("login-message","Connexion…");const {data,error}=await client.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error){feedback("login-message",error.message,true);return;}showSession(data.user);feedback("login-message","");page=0;loadLeads();});
