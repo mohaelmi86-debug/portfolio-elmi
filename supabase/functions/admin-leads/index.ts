@@ -1,19 +1,23 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.0";
 
-const allowedOrigin = Deno.env.get("PORTFOLIO_ALLOWED_ORIGIN") ?? "https://elmihdhoirmohamedali.netlify.app";
-const corsHeaders = {
-  "Access-Control-Allow-Origin": allowedOrigin,
+const allowedOrigin = Deno.env.get("PORTFOLIO_ALLOWED_ORIGIN") ?? "https://elmihdhoirm Mohamedali.netlify.app";
+const isAllowedOrigin = (origin: string | null) => !!origin && (
+  origin === allowedOrigin ||
+  /^https:\/\/deploy-preview-\\d+--elmihdhoirmohamedali\\.netlify\\.app$/.test(origin)
+);
+const corsHeaders = (origin: string | null) => ({
+  "Access-Control-Allow-Origin": isAllowedOrigin(origin) ? origin! : allowedOrigin,
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "GET, PATCH, OPTIONS",
   "Vary": "Origin",
-};
-const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
-  status, headers: { ...corsHeaders(null), "Content-Type": "application/json" },
+});
+const json = (body: unknown, status = 200, origin: string | null = null) => new Response(JSON.stringify(body), {
+  status, headers: { ...corsHeaders(origin), "Content-Type": "application/json" },
 });
 
 Deno.serve(async (req) => {
   const origin = req.headers.get("Origin");
-  if (origin && !isAllowedOrigin(origin)) return json({ error: "Origine non autorisée." }, 403);
+  if (origin && !isAllowedOrigin(origin)) return json({ error: "Origine non autorisée." }, 403, origin);
   if (req.method === "OPTIONS") {
     if (origin && origin !== allowedOrigin) return new Response(null, { status: 403 });
     return new Response("ok", { headers: corsHeaders });
@@ -26,15 +30,15 @@ Deno.serve(async (req) => {
   const admins = (Deno.env.get("PORTFOLIO_ADMIN_EMAILS") ?? "")
     .split(",").map((email) => email.trim().toLowerCase()).filter(Boolean);
   if (!url || !anon || !service || admins.length === 0) {
-    return json({ error: "Configuration administrateur incomplète." }, 503);
+    return json({ error: "Configuration administrateur incomplète." }, 503, origin);
   }
 
   const bearer = req.headers.get("Authorization");
-  if (!bearer?.startsWith("Bearer ")) return json({ error: "Authentification requise." }, 401);
+  if (!bearer?.startsWith("Bearer ")) return json({ error: "Authentification requise." }, 401, origin);
   const authClient = createClient(url, anon, { global: { headers: { Authorization: bearer } } });
   const { data: { user }, error: authError } = await authClient.auth.getUser();
   if (authError || !user?.email || !admins.includes(user.email.toLowerCase())) {
-    return json({ error: "Accès administrateur refusé." }, 403);
+    return json({ error: "Accès administrateur refusé." }, 403, origin);
   }
 
   const db = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -46,11 +50,11 @@ Deno.serve(async (req) => {
       .order("created_at", { ascending: false }).range(page * size, page * size + size - 1);
     if (status && ["new", "in_progress", "qualified", "closed", "spam"].includes(status)) query = query.eq("status", status);
     const { data, error, count } = await query;
-    if (error) return json({ error: "Lecture des demandes impossible." }, 500);
+    if (error) return json({ error: "Lecture des demandes impossible." }, 500, origin);
     const { count: newCount, error: newCountError } = await db.from("contact_leads")
       .select("id", { count: "exact", head: true }).eq("status", "new");
-    if (newCountError) return json({ error: "Comptage des demandes impossible." }, 500);
-    return json({ data, count, newCount, page, size });
+    if (newCountError) return json({ error: "Comptage des demandes impossible." }, 500, origin);
+    return json({ data, count, newCount, page, size }, 200, origin);
   }
 
   let payload: Record<string, unknown>;
