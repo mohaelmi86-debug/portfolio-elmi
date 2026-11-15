@@ -38,3 +38,7 @@
 .services-note span{font-size:13px}
 .services-note .button{white-space:nowrap}
 @media(max-width:680px){.services-grid{grid-template-columns:1fr}.service-card{min-height:0;padding:22px}.services-note{align-items:flex-start;flex-direction:column}}
+
+/* Anti-spam honeypot: invisible to visitors, accessible form structure retained. */
+.honeypot{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important}
+#investor-form button[disabled]{opacity:.65;cursor:wait}
