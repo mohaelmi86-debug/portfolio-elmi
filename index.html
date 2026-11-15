@@ -49,8 +49,9 @@
 <label>Projet<select name="project" id="investor-project"><option value="Discussion générale">Discussion générale</option></select></label>
 <label>Fourchette envisagée<select name="amount"><option>Non définie</option><option>Moins de 10 000 €</option><option>10 000 – 50 000 €</option><option>50 000 – 100 000 €</option><option>100 000 – 500 000 €</option><option>Plus de 500 000 €</option><option>À discuter</option></select></label>
 <label>Délai souhaité<select name="timing"><option>À discuter</option><option>Immédiatement</option><option>Dans les 3 mois</option><option>Dans les 6 à 12 mois</option><option>Veille / exploration</option></select></label>
-<label class="full">Message<textarea name="message" rows="3" placeholder="Présentez votre intérêt, vos attentes ou vos questions…"></textarea></label>
-<label class="consent full"><input type="checkbox" required>J’accepte que mes informations soient utilisées uniquement pour être recontacté au sujet de cette demande.</label>
+<label class="full">Message<textarea name="message" rows="3" minlength="10" placeholder="Présentez votre intérêt, vos attentes ou vos questions…"></textarea></label>
+<label class="honeypot" aria-hidden="true">Ne pas remplir<input name="website" tabindex="-1" autocomplete="off"></label>
+<label class="consent full"><input name="consent" type="checkbox" required>J’accepte que mes informations soient utilisées uniquement pour être recontacté au sujet de cette demande.</label>
 <button class="button primary full" type="submit">Préparer ma demande <b>↗</b></button><p id="investor-result" class="form-message full" aria-live="polite"></p>
 </div></form></div></section>
 <section class="contact-section" id="contact"><div class="container contact-card"><div><div class="section-kicker">06 / Contact</div><h2>Construisons quelque chose <span>d’utile.</span></h2><p>Projet, mission, partenariat ou idée à concrétiser : parlons-en.</p></div><div class="contact-actions"><a class="button primary" id="email-link" href="mailto:contact@elmi-portfolio.fr">Écrire un message ↗</a><div id="social-links" class="social-links"></div></div></div></section>
