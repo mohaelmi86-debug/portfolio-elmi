@@ -45,10 +45,10 @@ Deno.serve(async (req) => {
   if (req.method === "GET") {
     const page = Math.max(0, Number(urlSafe(req.url, "page") ?? 0) || 0);
     const size = Math.min(100, Math.max(1, Number(urlSafe(req.url, "size") ?? 25) || 25));
-    const status = urlSafe(req.url, "status");
+    const status = urlSafe(req.url, "status");\n    const stage = urlSafe(req.url, "stage");
     let query = db.from("contact_leads").select("id,created_at,name,email,organization,request_type,service_slug,project_slug,budget_range,timeline,message,status,source,internal_notes,pipeline_stage,next_action,next_action_at,estimated_amount,proposal_amount,signed_amount", { count: "exact" })
       .order("created_at", { ascending: false }).range(page * size, page * size + size - 1);
-    if (status && ["new", "in_progress", "qualified", "closed", "spam"].includes(status)) query = query.eq("status", status);
+    if (status && ["new", "in_progress", "qualified", "closed", "spam"].includes(status)) query = query.eq("status", status);\n    if (stage && ["new", "contacted", "qualified", "proposal", "won", "lost"].includes(stage)) query = query.eq("pipeline_stage", stage);
     const { data, error, count } = await query;
     if (error) return json({ error: "Lecture des demandes impossible." }, 500, origin);
     const { count: newCount, error: newCountError } = await db.from("contact_leads")
