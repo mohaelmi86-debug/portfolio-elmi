@@ -70,7 +70,7 @@ async function updateLead(id,patch,control){
 }
 $("login-form").addEventListener("submit",async e=>{e.preventDefault();if(!client){feedback("login-message","Configuration Supabase manquante dans admin-config.js.",true);return;}feedback("login-message","Connexion…");const {data,error}=await client.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error){feedback("login-message",error.message,true);return;}showSession(data.user);feedback("login-message","");page=0;loadLeads();});
 $("logout").addEventListener("click",async()=>{await client?.auth.signOut();showSession(null);});
-$("refresh").addEventListener("click",loadLeads);$("previous").addEventListener("click",()=>{if(page>0){page--;loadLeads();}});$("next").addEventListener("click",()=>{if((page+1)*25<total){page++;loadLeads();}});
+$("refresh").addEventListener("click",loadLeads);$("export-csv").addEventListener("click",exportCsv);$("previous").addEventListener("click",()=>{if(page>0){page--;loadLeads();}});$("next").addEventListener("click",()=>{if((page+1)*25<total){page++;loadLeads();}});
 $("status-filter").addEventListener("change",()=>{page=0;loadLeads();});$("search").addEventListener("input",renderLeads);
 if(!client)feedback("login-message","Ajoutez la clé anon publique dans admin-config.js pour activer la connexion.",true);else client.auth.getSession().then(({data})=>{showSession(data.session?.user||null);if(data.session)loadLeads();});
 
@@ -91,4 +91,13 @@ function renderPipeline(stats,total){
     row.append(name,track,count);
     root.append(row);
   });
+}
+
+function exportCsv(){
+ const cols=[["name","Nom"],["email","Email"],["organization","Organisation"],["request_type","Type"],["service_slug","Service"],["project_slug","Projet"],["budget_range","Budget"],["timeline","Délai"],["status","Statut"],["pipeline_stage","Étape commerciale"],["estimated_amount","Valeur estimée"],["proposal_amount","Proposition"],["signed_amount","CA signé"],["next_action","Prochaine action"],["next_action_at","Date relance"],["created_at","Date création"],["message","Message"],["internal_notes","Notes internes"]];
+ const quote=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+ const csv="\uFEFF"+cols.map(c=>quote(c[1])).join(";")+"\r\n"+leads.map(l=>cols.map(c=>quote(l[c[0]])).join(";")).join("\r\n");
+ const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"}),url=URL.createObjectURL(blob),link=document.createElement("a");
+ link.href=url;link.download="portfolio-crm-page-"+(page+1)+"-"+new Date().toISOString().slice(0,10)+".csv";link.click();URL.revokeObjectURL(url);
+ feedback("load-message",leads.length+" demande(s) exportée(s) (page affichée).");
 }
