@@ -309,27 +309,22 @@
     $$("#mobile-nav a").forEach(a => a.addEventListener("click", () => {
       $("#mobile-nav").classList.remove("open"); $("#mobile-menu").setAttribute("aria-expanded", "false"); $("#mobile-menu").textContent = "☰";
     }));
-    $("#investor-form").addEventListener("submit", event => {
+    $("#investor-form").addEventListener("submit", async event => {
       event.preventDefault();
-      const form = new FormData(event.currentTarget);
-      const email = state.profile.email;
-      if (!email) {
-        $("#investor-result").textContent = "Adresse de réception non configurée. Ajoute ton adresse professionnelle dans data/profile.json pour activer l’envoi de la demande.";
-        return;
-      }
-      const body = [
-        "Manifestation d’intérêt — Portfolio El-Mihdhoir MOHAMED ALI", "",
-        "Nom / organisation : " + form.get("name"),
-        "E-mail : " + form.get("email"),
-        "Type : " + form.get("interest"),
-        "Projet : " + form.get("project"),
-        "Fourchette : " + form.get("amount"),
-        "Délai : " + form.get("timing"),
-        "Message : " + (form.get("message") || "—")
-      ].join("\n");
-      $("#investor-result").textContent = "Votre application e-mail va s’ouvrir avec votre demande préremplie. Vérifiez l’adresse destinataire avant l’envoi.";
-      window.location.href = "mailto:" + encodeURIComponent(email) + "?subject=" + encodeURIComponent("Intérêt — " + form.get("project")) + "&body=" + encodeURIComponent(body);
-    });
+      const formEl = event.currentTarget, submit = formEl.querySelector('button[type="submit"]'), result = $("#investor-result"), form = new FormData(formEl);
+      const typeMap = { "Partenariat":"partenariat", "Investissement":"investissement", "Collaboration":"collaboration", "Accompagnement":"collaboration" };
+      const message = String(form.get("message") || "").trim() || "Je souhaite être recontacté pour échanger sur cette demande.";
+      const payload = { name:form.get("name"), email:form.get("email"), request_type:typeMap[form.get("interest")]||"autre", project_slug:String(form.get("project")||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""), budget_range:form.get("amount"), timeline:form.get("timing"), message, consent:form.get("consent")==="on", website:form.get("website")||"" };
+      submit.disabled=true; submit.textContent="Envoi en cours…"; result.textContent="";
+      try {
+        const response=await fetch("https://zmsbdetlnjrpwvbyajcw.supabase.co/functions/v1/submit-lead",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+        const data=await response.json().catch(()=>({}));
+        if(!response.ok||!data.ok) throw new Error(data.error||"Envoi impossible.");
+        result.textContent="Merci ! Votre demande a bien été enregistrée. Je reviendrai vers vous."; formEl.reset();
+      } catch(error) {
+        result.textContent="L’envoi a échoué : "+(error.message||"erreur réseau")+". Vous pouvez écrire directement à "+(state.profile.email||"l’adresse de contact du portfolio")+".";
+      } finally { submit.disabled=false; submit.innerHTML="Envoyer ma demande <b>↗</b>"; }
+    });;
   }
   async function init() {
     try {
