@@ -74,8 +74,8 @@ $("refresh").addEventListener("click",loadLeads);$("previous").addEventListener(
 $("status-filter").addEventListener("change",()=>{page=0;loadLeads();});$("search").addEventListener("input",renderLeads);
 if(!client)feedback("login-message","Ajoutez la clé anon publique dans admin-config.js pour activer la connexion.",true);else client.auth.getSession().then(({data})=>{showSession(data.session?.user||null);if(data.session)loadLeads();});
 
-function money(v){return new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(Number(v||0)}\nfunction renderPipeline(stats,total){
- const root=$("pipeline-bars");if(!root)return;root.replaceChildren();
+function money(v){return new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(Number(v||0));}
+function renderPipeline(stats,total){
  const items=[["Nouveaux",stats.new],["Contactés",stats.contacted],["Qualifiés",stats.qualified],["Propositions",stats.proposal],["Gagnés",stats.won],["Perdus",stats.lost]];
  items.forEach(([label,value])=>{
   const row=node("div","pipeline-row"),name=node("span","pipeline-label",label),track=node("div","pipeline-track"),fill=node("div","pipeline-fill"),count=node("strong","pipeline-count",String(value??0)));
