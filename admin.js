@@ -22,7 +22,7 @@ async function loadLeads(){
   leads=body.data||[];total=body.count||0;$("total-count").textContent=String(total);$("new-count").textContent=String(body.newCount??0);$("shown-count").textContent=String(leads.length);$("page-label").textContent=`Page ${page+1}`;
   const kpiRes=await fetch(`${cfg.supabaseUrl}/functions/v1/admin-leads`,{method:"PATCH",headers:{Authorization:`Bearer ${session.access_token}`,apikey:cfg.supabaseAnonKey,"Content-Type":"application/json"},body:JSON.stringify({action:"dashboard"})});
   const kpi=await kpiRes.json();if(!kpiRes.ok)throw new Error(kpi.error||"KPIs indisponibles.");
-  $("kpi-qualified").textContent=String(kpi.stats.qualified??0);$("kpi-proposal").textContent=String(kpi.stats.proposal??0);$("kpi-won").textContent=String(kpi.stats.won??0);$("kpi-lost").textContent=String(kpi.stats.lost??0);$("kpi-conversion").textContent=`${kpi.conversion??0}%`;$("kpi-late").textContent=String(kpi.late??0);
+  $("kpi-new").textContent=String(kpi.stats.new??0);$("kpi-contacted").textContent=String(kpi.stats.contacted??0);$("kpi-qualified").textContent=String(kpi.stats.qualified??0);$("kpi-proposal").textContent=String(kpi.stats.proposal??0);$("kpi-won").textContent=String(kpi.stats.won??0);$("kpi-lost").textContent=String(kpi.stats.lost??0);$("kpi-conversion").textContent=`${kpi.conversion??0}%`;$("kpi-late").textContent=String(kpi.late??0);renderPipeline(kpi.stats,kpi.total??0);
   renderLeads();feedback("load-message",total?`${total} demande(s)`:"Aucune demande.");
  }catch(e){feedback("load-message",e.message||"Erreur réseau.",true);}finally{setBusy(false);}
 }
@@ -72,3 +72,12 @@ $("logout").addEventListener("click",async()=>{await client?.auth.signOut();show
 $("refresh").addEventListener("click",loadLeads);$("previous").addEventListener("click",()=>{if(page>0){page--;loadLeads();}});$("next").addEventListener("click",()=>{if((page+1)*25<total){page++;loadLeads();}});
 $("status-filter").addEventListener("change",()=>{page=0;loadLeads();});$("search").addEventListener("input",renderLeads);
 if(!client)feedback("login-message","Ajoutez la clé anon publique dans admin-config.js pour activer la connexion.",true);else client.auth.getSession().then(({data})=>{showSession(data.session?.user||null);if(data.session)loadLeads();});
+
+function renderPipeline(stats,total){
+ const root=$("pipeline-bars");if(!root)return;root.replaceChildren();
+ const items=[["Nouveaux",stats.new],["Contactés",stats.contacted],["Qualifiés",stats.qualified],["Propositions",stats.proposal],["Gagnés",stats.won],["Perdus",stats.lost]];
+ items.forEach(([label,value])=>{
+  const row=node("div","pipeline-row"),name=node("span","pipeline-label",label),track=node("div","pipeline-track"),fill=node("div","pipeline-fill"),count=node("strong","pipeline-count",String(value??0));
+  fill.style.width=`${total?Math.min(100,(Number(value||0)/total)*100):0}%`;track.append(fill);row.append(name,track,count);root.append(row);
+ });
+}
