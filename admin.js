@@ -67,6 +67,95 @@ function renderClients(){
  const root=$("leads-list");root.replaceChildren();const term=$("search").value.trim().toLowerCase();
  const filtered=leads.filter(c=>[c.name,c.email,c.organization,c.phone,c.notes].join(" ").toLowerCase().includes(term));
  if(!filtered.length){root.append(node("div","panel lead-card",term?"Aucun résultat sur cette page.":"Aucun client enregistré."));return;}
+ filtered.forEach(c=>{
+  const card=node("article","lead-card"),top=node("div","lead-top"),left=node("div","");
+  left.append(node("h3","",c.name||"Client sans nom"),node("div","lead-meta",c.organization||"Client particulier"));
+  if(c.email){const a=node("a","",c.email);a.href="mailto:"+c.email;left.append(a);}
+  top.append(left,node("span","status",c.status==="active"?"Actif":"Inactif"));card.append(top,node("div","lead-meta","Client depuis le "+new Date(c.created_at).toLocaleDateString("fr-FR")));
+  const form=node("section","lead-notes"),fields=[];
+  [["name","Nom","text"],["email","Email","email"],["organization","Organisation","text"],["phone","Téléphone","tel"]].forEach(([key,label,type])=>{const wrap=node("label","amount-field",label),input=node("input");input.type=type;input.value=c[key]||"";input.maxLength=255;wrap.append(input);form.append(wrap);fields.push([key,input]);});
+  const notesLabel=node("label","notes-label","Notes client");const notes=node("textarea","notes-input");notes.rows=3;notes.maxLength=5000;notes.value=c.notes||"";form.append(notesLabel,notes);
+  const statusWrap=node("label","amount-field","Statut"),status=node("select");[["active","Actif"],["inactive","Inactif"]].forEach(([v,l])=>{const o=node("option","",l);o.value=v;o.selected=c.status===v;status.append(o);});statusWrap.append(status);form.append(statusWrap);
+  const save=node("button","button button-primary","Enregistrer la fiche");save.type="button";save.addEventListener("click",()=>updateClient(c.id,{...Object.fromEntries(fields.map(([k,i])=>[k,i.value.trim()])),notes:notes.value,status:status.value},save));
+  form.append(save);card.append(form);root.append(card);
+ });
+}
+async function updateClient(id,patch,button){
+ button.disabled=true;
+ try{const {data:{session}}=await client.auth.getSession();if(!session)throw new Error("Session expirée.");
+ const res=await fetch(cfg.supabaseUrl+"/functions/v1/admin-leads",{method:"PATCH",headers:{Authorization:"Bearer "+session.access_token,apikey:cfg.supabaseAnonKey,"Content-Type":"application/json"},body:JSON.stringify({action:"update_client",client_id:id,...patch})});
+ const body=await res.json();if(!res.ok)throw new Error(body.error||"Modification impossible.");
+ feedback("load-message","Fiche client enregistrée.");await loadLeads();
+ }catch(e){feedback("load-message",e.message||"Erreur réseau.",true);button.disabled=false;}
+}/ PORFOLIO CRM — build refresh 2026-11-15
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.0";
+
+const cfg = window.PORTFOLIO_CONFIG ?? {};
+const client = cfg.supabaseUrl && cfg.supabaseAnonKey && !cfg.supabaseAnonKey.startsWith("REMPLACER")
+  ? createClient(cfg.supabaseUrl, cfg.supabaseAnonKey) : null;
+const $ = (id) => document.getElementById(id);
+const labels = { new: "Nouveau", in_progress: "En cours", qualified: "Qualifié", closed: "Clôturé", spam: "Spam" };
+const stages = { new: "Nouveau", contacted: "Contacté", qualified: "Qualifié", proposal: "Proposition", won: "Gagné", lost: "Perdu" };
+let page = 0, total = 0, leads = [], busy = false, clientsMode = false;
+function feedback(id, message, error = false) { $(id).textContent = message; $(id).style.color = error ? "#ffb9b9" : ""; }
+function setBusy(value) { busy = value; $("refresh").disabled = value; $("previous").disabled = value || page === 0; $("next").disabled = value || (page + 1) * 25 >= total; }
+function showSession(user) { $("login-panel").hidden=!!user; $("crm-panel").hidden=!user; $("session-actions").hidden=!user; $("admin-email").textContent=user?.email??""; }
+function node(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;}
+async function loadLeads(){
+ if(!client||busy)return;setBusy(true);feedback("load-message","Chargement…");
+ try{
+  const {data:{session}}=await client.auth.getSession();if(!session){showSession(null);return;}
+  const status=$("status-filter").value,qs=new URLSearchParams({page:String(page),size:"25"});if(status)qs.set("status",status);if(clientsMode)qs.set("clients","1");
+  const res=await fetch(`${cfg.supabaseUrl}/functions/v1/admin-leads?${qs}`,{headers:{Authorization:`Bearer ${session.access_token}`,apikey:cfg.supabaseAnonKey}});
+  const body=await res.json();if(!res.ok)throw new Error(body.error||"Chargement impossible.");
+  leads=body.data||[];total=body.count||0;$("total-count").textContent=String(total);$("new-count").textContent=String(body.newCount??0);$("shown-count").textContent=String(leads.length);$("page-label").textContent=`Page ${page+1}`;
+  const kpiRes=await fetch(`${cfg.supabaseUrl}/functions/v1/admin-leads`,{method:"PATCH",headers:{Authorization:`Bearer ${session.access_token}`,apikey:cfg.supabaseAnonKey,"Content-Type":"application/json"},body:JSON.stringify({action:"dashboard"})});
+  const kpi=await kpiRes.json();if(!kpiRes.ok)throw new Error(kpi.error||"KPIs indisponibles.");
+  $("kpi-new").textContent=String(kpi.stats.new??0);$("kpi-contacted").textContent=String(kpi.stats.contacted??0);$("kpi-qualified").textContent=String(kpi.stats.qualified??0);$("kpi-proposal").textContent=String(kpi.stats.proposal??0);$("kpi-won").textContent=String(kpi.stats.won??0);$("kpi-lost").textContent=String(kpi.stats.lost??0);$("kpi-conversion").textContent=`${kpi.conversion??0}%`;$("kpi-late").textContent=String(kpi.late??0);$("kpi-estimate").textContent=money(kpi.estimatedAmount);$("kpi-proposals-eur").textContent=money(kpi.proposalAmount);$("kpi-revenue").textContent=money(kpi.signedRevenue);renderPipeline(kpi.stats,kpi.total??0);
+  if(clientsMode)renderClients();else renderLeads();$("crm-title").textContent=clientsMode?"Clients gagnés":"Demandes entrantes";$("export-csv").textContent=clientsMode?"⇩ Export clients CSV":"⇩ Export CSV";feedback("load-message",clientsMode?`${total} client(s) gagné(s)`:total?`${total} demande(s)`:"Aucune demande.");$("clients-view").textContent=clientsMode?"← Retour aux demandes":"👥 Clients gagnés";
+ }catch(e){feedback("load-message",e.message||"Erreur réseau.",true);}finally{setBusy(false);}
+}
+function renderLeads(){
+ const root=$("leads-list");root.replaceChildren();const term=$("search").value.trim().toLowerCase();
+ const filtered=leads.filter(l=>[l.name,l.email,l.organization,l.message,l.request_type,l.internal_notes,l.pipeline_stage,l.next_action].join(" ").toLowerCase().includes(term));
+ if(!filtered.length){root.append(node("div","panel lead-card",term?"Aucun résultat sur cette page.":"Aucune demande à afficher."));return;}
+ filtered.forEach(lead=>{
+  const card=node("article","lead-card"),top=node("div","lead-top"),left=node("div");
+  left.append(node("h3","",lead.name||"Contact sans nom"));const email=node("a","",lead.email);email.href=`mailto:${lead.email}`;left.append(email);
+  top.append(left,node("span","status",labels[lead.status]||lead.status));card.append(top);
+  const date=lead.created_at?new Date(lead.created_at).toLocaleString("fr-FR"):"Date inconnue";
+  card.append(node("div","lead-meta",[date,lead.request_type,lead.organization,lead.service_slug,lead.project_slug].filter(Boolean).join(" · ")));
+  if(lead.budget_range||lead.timeline)card.append(node("div","lead-meta",[`Budget : ${lead.budget_range||"—"}`, `Délai : ${lead.timeline||"—"}`].join(" · ")));
+  card.append(node("p","lead-message",lead.message||"(Sans message)"));
+  const amounts=node("div","lead-amounts");[[ "estimated_amount","Valeur estimée (€)" ],["proposal_amount","Proposition (€)"],["signed_amount","CA signé (€)"]].forEach(([key,label])=>{const wrap=node("label","amount-field",label),inp=node("input");inp.type="number";inp.min="0";inp.step="0.01";inp.value=String(lead[key]??0);inp.setAttribute("aria-label",label);wrap.append(inp);amounts.append(wrap);inp.addEventListener("change",()=>updateLead(lead.id,{[key]:Number(inp.value)},inp));});card.append(amounts);
+  const controls=node("div","lead-controls"),select=node("select");select.setAttribute("aria-label",`Statut de ${lead.name}`);
+  Object.entries(labels).forEach(([value,label])=>{const o=node("option","",label);o.value=value;o.selected=value===lead.status;select.append(o);});
+  select.addEventListener("change",()=>updateLead(lead.id,{status:select.value},select));controls.append(select);
+  const stageSelect=node("select");stageSelect.setAttribute("aria-label",`Étape commerciale de ${lead.name}`);
+  Object.entries(stages).forEach(([value,label])=>{const o=node("option","",label);o.value=value;o.selected=value===(lead.pipeline_stage||"new");stageSelect.append(o);});
+  stageSelect.addEventListener("change",()=>updateLead(lead.id,{pipeline_stage:stageSelect.value},stageSelect));controls.append(stageSelect);if(lead.pipeline_stage==="won"){const convert=node("button","button button-primary","Convertir en client");convert.type="button";convert.addEventListener("click",()=>convertClient(lead.id,convert));controls.append(convert);}card.append(controls);
+  const follow=node("div","lead-followup"),action=node("input");action.type="text";action.maxLength=500;action.placeholder="Prochaine action (ex. appeler, envoyer devis…)";action.value=lead.next_action||"";
+  const due=node("input");due.type="datetime-local";due.setAttribute("aria-label","Date de relance");due.value=lead.next_action_at?new Date(new Date(lead.next_action_at).getTime()-new Date(lead.next_action_at).getTimezoneOffset()*60000).toISOString().slice(0,16):"";
+  const saveFollow=node("button","button button-quiet","Enregistrer la relance");saveFollow.type="button";saveFollow.addEventListener("click",()=>updateLead(lead.id,{next_action:action.value||null,next_action_at:due.value?new Date(due.value).toISOString():null},saveFollow));
+  follow.append(action,due,saveFollow);card.append(follow);
+  const notes=node("section","lead-notes"),heading=node("label","notes-label","Notes internes (visibles uniquement dans le CRM)");heading.htmlFor=`notes-${lead.id}`;
+  const area=node("textarea","notes-input");area.id=`notes-${lead.id}`;area.rows=3;area.maxLength=5000;area.placeholder="Contexte, échange, prochaine action…";area.value=lead.internal_notes||"";
+  const save=node("button","button button-quiet","Enregistrer les notes");save.type="button";save.addEventListener("click",()=>updateLead(lead.id,{internal_notes:area.value},save));
+  notes.append(heading,area,save);card.append(notes);
+  const histBtn=node("button","button button-quiet","Voir l’historique");histBtn.type="button";
+  const histBox=node("div","lead-history");histBox.hidden=true;
+  histBtn.addEventListener("click",async()=>{histBox.hidden=!histBox.hidden;if(!histBox.hidden&& !histBox.dataset.loaded){histBox.textContent="Chargement de l’historique…";try{const {data:{session}}=await client.auth.getSession();const rr=await fetch(`${cfg.supabaseUrl}/functions/v1/admin-leads?history=${encodeURIComponent(lead.id)}`,{headers:{Authorization:`Bearer ${session.access_token}`,apikey:cfg.supabaseAnonKey}});const jj=await rr.json();if(!rr.ok)throw new Error(jj.error||"Historique indisponible");histBox.replaceChildren();(jj.history||[]).forEach(item=>{const line=node("div","lead-history-item");const when=new Date(item.created_at).toLocaleString("fr-FR");line.append(node("strong","",when+" · "+item.actor_email));line.append(node("pre","",JSON.stringify(item.changes,null,2)));histBox.append(line);});if(!jj.history?.length)histBox.textContent="Aucune activité enregistrée.";histBox.dataset.loaded="1";}catch(err){histBox.textContent=err.message||"Erreur historique";}}});
+  card.append(histBtn,histBox);root.append(card);
+ });
+}
+async function convertClient(leadId,button){
+ button.disabled=true;
+ try{const {data:{session}}=await client.auth.getSession();const res=await fetch(`${cfg.supabaseUrl}/functions/v1/admin-leads`,{method:"POST",headers:{Authorization:`Bearer ${session.access_token}`,apikey:cfg.supabaseAnonKey,"Content-Type":"application/json"},body:JSON.stringify({action:"convert",lead_id:leadId})});const body=await res.json();if(!res.ok)throw new Error(body.error||"Conversion impossible.");feedback("load-message","Prospect converti en client.");clientsMode=true;page=0;await loadLeads();}catch(e){feedback("load-message",e.message,true);button.disabled=false;}
+}
+function renderClients(){
+ const root=$("leads-list");root.replaceChildren();const term=$("search").value.trim().toLowerCase();
+ const filtered=leads.filter(c=>[c.name,c.email,c.organization,c.phone,c.notes].join(" ").toLowerCase().includes(term));
+ if(!filtered.length){root.append(node("div","panel lead-card",term?"Aucun résultat sur cette page.":"Aucun client enregistré."));return;}
  filtered.forEach(c=>{const card=node("article","lead-card"),top=node("div","lead-top"),left=node("div","");left.append(node("h3","",c.name),node("div","lead-meta",c.organization||"Client particulier"));if(c.email){const a=node("a","",c.email);a.href=`mailto:${c.email}`;left.append(a);}top.append(left,node("span","status",c.status==="active"?"Actif":"Inactif"));card.append(top,node("div","lead-meta",`Client depuis le ${new Date(c.created_at).toLocaleDateString("fr-FR")}`));if(c.phone)card.append(node("p","lead-meta","Téléphone : "+c.phone));if(c.notes)card.append(node("p","lead-message",c.notes));root.append(card);});
 }
 \nasync function updateLead(id,patch,control){
