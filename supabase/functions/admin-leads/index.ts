@@ -69,3 +69,9 @@ Deno.serve(async (req) => {
     .select("id,status,internal_notes,pipeline_stage,next_action,next_action_at").single();
   if (error) return json({ error: "Mise à jour impossible." }, 500);
   return json({ data });
+
+});
+
+function urlSafe(requestUrl: string, key: string) {
+  return new URL(requestUrl).searchParams.get(key);
+}
