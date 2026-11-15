@@ -19,8 +19,8 @@ Deno.serve(async (req) => {
   const origin = req.headers.get("Origin");
   if (origin && !isAllowedOrigin(origin)) return json({ error: "Origine non autorisée." }, 403, origin);
   if (req.method === "OPTIONS") {
-    if (origin && origin !== allowedOrigin) return new Response(null, { status: 403 });
-    return new Response("ok", { headers: corsHeaders });
+    if (origin && !isAllowedOrigin(origin)) return new Response(null, { status: 403, headers: corsHeaders(origin) });
+    return new Response(null, { status: 204, headers: corsHeaders(origin) });
   }
   if (!["GET", "PATCH"].includes(req.method)) return json({ error: "Méthode non autorisée." }, 405);
 
