@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
     const page = Math.max(0, Number(urlSafe(req.url, "page") ?? 0) || 0);
     const size = Math.min(100, Math.max(1, Number(urlSafe(req.url, "size") ?? 25) || 25));
     const status = urlSafe(req.url, "status");
-    let query = db.from("contact_leads").select("id,created_at,name,email,organization,request_type,service_slug,project_slug,budget_range,timeline,message,status,source", { count: "exact" })
+    let query = db.from("contact_leads").select("id,created_at,name,email,organization,request_type,service_slug,project_slug,budget_range,timeline,message,status,source,internal_notes,pipeline_stage,next_action,next_action_at", { count: "exact" })
       .order("created_at", { ascending: false }).range(page * size, page * size + size - 1);
     if (status && ["new", "in_progress", "qualified", "closed", "spam"].includes(status)) query = query.eq("status", status);
     const { data, error, count } = await query;
@@ -53,17 +53,19 @@ Deno.serve(async (req) => {
     return json({ data, count, newCount, page, size });
   }
 
-  let payload: { id?: string; status?: string };
+  let payload: Record<string, unknown>;
   try { payload = await req.json(); } catch { return json({ error: "JSON invalide." }, 400); }
-  if (!payload.id || !["new", "in_progress", "qualified", "closed", "spam"].includes(payload.status ?? "")) {
-    return json({ error: "Identifiant ou statut invalide." }, 400);
-  }
-  const { data, error } = await db.from("contact_leads").update({ status: payload.status })
-    .eq("id", payload.id).select("id,status").single();
+  const id = typeof payload.id === "string" ? payload.id : "";
+  const allowed = ["status", "internal_notes", "pipeline_stage", "next_action", "next_action_at"];
+  const patch: Record<string, unknown> = {};
+  for (const key of allowed) if (Object.prototype.hasOwnProperty.call(payload, key)) patch[key] = payload[key];
+  if (!id || Object.keys(patch).length === 0) return json({ error: "Identifiant ou champs invalides." }, 400);
+  if ("status" in patch && !["new", "in_progress", "qualified", "closed", "spam"].includes(String(patch.status))) return json({ error: "Statut invalide." }, 400);
+  if ("pipeline_stage" in patch && !["new", "contacted", "qualified", "proposal", "won", "lost"].includes(String(patch.pipeline_stage))) return json({ error: "Étape commerciale invalide." }, 400);
+  if ("internal_notes" in patch && (typeof patch.internal_notes !== "string" || patch.internal_notes.length > 5000)) return json({ error: "Notes invalides (5000 caractères maximum)." }, 400);
+  if ("next_action" in patch && patch.next_action !== null && (typeof patch.next_action !== "string" || patch.next_action.length > 500)) return json({ error: "Action invalide." }, 400);
+  if ("next_action_at" in patch && patch.next_action_at !== null && (typeof patch.next_action_at !== "string" || Number.isNaN(Date.parse(patch.next_action_at)))) return json({ error: "Date de relance invalide." }, 400);
+  const { data, error } = await db.from("contact_leads").update(patch).eq("id", id)
+    .select("id,status,internal_notes,pipeline_stage,next_action,next_action_at").single();
   if (error) return json({ error: "Mise à jour impossible." }, 500);
   return json({ data });
-});
-
-function urlSafe(requestUrl: string, key: string) {
-  return new URL(requestUrl).searchParams.get(key);
-}
