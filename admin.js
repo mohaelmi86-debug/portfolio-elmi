@@ -7,7 +7,7 @@ const client = cfg.supabaseUrl && cfg.supabaseAnonKey && !cfg.supabaseAnonKey.st
 const $ = (id) => document.getElementById(id);
 const labels = { new: "Nouveau", in_progress: "En cours", qualified: "Qualifié", closed: "Clôturé", spam: "Spam" };
 const stages = { new: "Nouveau", contacted: "Contacté", qualified: "Qualifié", proposal: "Proposition", won: "Gagné", lost: "Perdu" };
-let page = 0, total = 0, leads = [], busy = false;
+let page = 0, total = 0, leads = [], busy = false, clientsMode = false;
 function feedback(id, message, error = false) { $(id).textContent = message; $(id).style.color = error ? "#ffb9b9" : ""; }
 function setBusy(value) { busy = value; $("refresh").disabled = value; $("previous").disabled = value || page === 0; $("next").disabled = value || (page + 1) * 25 >= total; }
 function showSession(user) { $("login-panel").hidden=!!user; $("crm-panel").hidden=!user; $("session-actions").hidden=!user; $("admin-email").textContent=user?.email??""; }
@@ -16,14 +16,14 @@ async function loadLeads(){
  if(!client||busy)return;setBusy(true);feedback("load-message","Chargement…");
  try{
   const {data:{session}}=await client.auth.getSession();if(!session){showSession(null);return;}
-  const status=$("status-filter").value,qs=new URLSearchParams({page:String(page),size:"25"});if(status)qs.set("status",status);
+  const status=$("status-filter").value,qs=new URLSearchParams({page:String(page),size:"25"});if(status)qs.set("status",status);if(clientsMode)qs.set("stage","won");
   const res=await fetch(`${cfg.supabaseUrl}/functions/v1/admin-leads?${qs}`,{headers:{Authorization:`Bearer ${session.access_token}`,apikey:cfg.supabaseAnonKey}});
   const body=await res.json();if(!res.ok)throw new Error(body.error||"Chargement impossible.");
   leads=body.data||[];total=body.count||0;$("total-count").textContent=String(total);$("new-count").textContent=String(body.newCount??0);$("shown-count").textContent=String(leads.length);$("page-label").textContent=`Page ${page+1}`;
   const kpiRes=await fetch(`${cfg.supabaseUrl}/functions/v1/admin-leads`,{method:"PATCH",headers:{Authorization:`Bearer ${session.access_token}`,apikey:cfg.supabaseAnonKey,"Content-Type":"application/json"},body:JSON.stringify({action:"dashboard"})});
   const kpi=await kpiRes.json();if(!kpiRes.ok)throw new Error(kpi.error||"KPIs indisponibles.");
   $("kpi-new").textContent=String(kpi.stats.new??0);$("kpi-contacted").textContent=String(kpi.stats.contacted??0);$("kpi-qualified").textContent=String(kpi.stats.qualified??0);$("kpi-proposal").textContent=String(kpi.stats.proposal??0);$("kpi-won").textContent=String(kpi.stats.won??0);$("kpi-lost").textContent=String(kpi.stats.lost??0);$("kpi-conversion").textContent=`${kpi.conversion??0}%`;$("kpi-late").textContent=String(kpi.late??0);$("kpi-estimate").textContent=money(kpi.estimatedAmount);$("kpi-proposals-eur").textContent=money(kpi.proposalAmount);$("kpi-revenue").textContent=money(kpi.signedRevenue);renderPipeline(kpi.stats,kpi.total??0);
-  renderLeads();feedback("load-message",total?`${total} demande(s)`:"Aucune demande.");
+  renderLeads();feedback("load-message",clientsMode?`${total} client(s) gagné(s)`:total?`${total} demande(s)`:"Aucune demande.");$("clients-view").textContent=clientsMode?"← Retour aux demandes":"👥 Clients gagnés";
  }catch(e){feedback("load-message",e.message||"Erreur réseau.",true);}finally{setBusy(false);}
 }
 function renderLeads(){
@@ -70,7 +70,7 @@ async function updateLead(id,patch,control){
 }
 $("login-form").addEventListener("submit",async e=>{e.preventDefault();if(!client){feedback("login-message","Configuration Supabase manquante dans admin-config.js.",true);return;}feedback("login-message","Connexion…");const {data,error}=await client.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error){feedback("login-message",error.message,true);return;}showSession(data.user);feedback("login-message","");page=0;loadLeads();});
 $("logout").addEventListener("click",async()=>{await client?.auth.signOut();showSession(null);});
-$("refresh").addEventListener("click",loadLeads);$("export-csv").addEventListener("click",exportCsv);$("previous").addEventListener("click",()=>{if(page>0){page--;loadLeads();}});$("next").addEventListener("click",()=>{if((page+1)*25<total){page++;loadLeads();}});
+$("clients-view").addEventListener("click",()=>{clientsMode=!clientsMode;page=0;loadLeads();});$("refresh").addEventListener("click",loadLeads);$("export-csv").addEventListener("click",exportCsv);$("previous").addEventListener("click",()=>{if(page>0){page--;loadLeads();}});$("next").addEventListener("click",()=>{if((page+1)*25<total){page++;loadLeads();}});
 $("status-filter").addEventListener("change",()=>{page=0;loadLeads();});$("search").addEventListener("input",renderLeads);
 if(!client)feedback("login-message","Ajoutez la clé anon publique dans admin-config.js pour activer la connexion.",true);else client.auth.getSession().then(({data})=>{showSession(data.session?.user||null);if(data.session)loadLeads();});
 
