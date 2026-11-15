@@ -13,7 +13,7 @@ create table if not exists public.contact_leads (
   timeline text,
   message text not null check (char_length(trim(message)) between 10 and 5000),
   consent_at timestamptz not null,
-  status text not null default 'new' check (status in ('new','qualified','in_progress','won','lost','spam')),
+  status text not null default 'new' check (status in ('new','in_progress','qualified','closed','spam')),
   source text not null default 'portfolio',
   assigned_to uuid,
   internal_notes text
