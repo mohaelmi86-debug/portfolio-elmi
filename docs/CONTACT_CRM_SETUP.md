@@ -12,7 +12,7 @@ La migration `supabase/migrations/202611150001_contact_leads.sql` crée la boît
 
 ## Schéma fonctionnel
 - Contact : nom, e-mail, organisation facultative, type de demande, service/projet, budget, délai, message et consentement.
-- CRM : statut `new → qualified → in_progress → won/lost`, attribution et notes internes.
+- CRM : statuts `new`, `qualified`, `in_progress`, `closed`, `spam`, attribution et notes internes.
 - Conservation : définir une durée de conservation et un processus de purge avant la mise en production (RGPD).
 - Consentement : ne collecter que les données nécessaires à la réponse, afficher une information de confidentialité et conserver la date du consentement.
 
