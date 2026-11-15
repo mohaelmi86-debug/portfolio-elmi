@@ -76,9 +76,19 @@ if(!client)feedback("login-message","Ajoutez la clé anon publique dans admin-co
 
 function money(v){return new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(Number(v||0));}
 function renderPipeline(stats,total){
- const items=[["Nouveaux",stats.new],["Contactés",stats.contacted],["Qualifiés",stats.qualified],["Propositions",stats.proposal],["Gagnés",stats.won],["Perdus",stats.lost]];
- items.forEach(([label,value])=>{
-  const row=node("div","pipeline-row"),name=node("span","pipeline-label",label),track=node("div","pipeline-track"),fill=node("div","pipeline-fill"),count=node("strong","pipeline-count",String(value??0));
-  fill.style.width=`${total?Math.min(100,(Number(value||0)/total)*100):0}%`;track.append(fill);row.append(name,track,count);root.append(row);
- });
+  const root=$("pipeline-bars");
+  if(!root)return;
+  root.replaceChildren();
+  const items=[["Nouveaux",stats.new],["Contactés",stats.contacted],["Qualifiés",stats.qualified],["Propositions",stats.proposal],["Gagnés",stats.won],["Perdus",stats.lost]];
+  items.forEach(([label,value])=>{
+    const row=node("div","pipeline-row");
+    const name=node("span","pipeline-label",label);
+    const track=node("div","pipeline-track");
+    const fill=node("div","pipeline-fill");
+    const count=node("strong","pipeline-count",String(value??0));
+    fill.style.width=`${total?Math.min(100,(Number(value||0)/total)*100):0}%`;
+    track.append(fill);
+    row.append(name,track,count);
+    root.append(row);
+  });
 }
