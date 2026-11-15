@@ -12,3 +12,5 @@
 .pipeline-count{text-align:right;font-size:13px}
 @media(max-width:850px){.crm-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:550px){.crm-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.pipeline-heading{align-items:flex-start;flex-direction:column}.pipeline-row{grid-template-columns:85px minmax(0,1fr) 24px;gap:8px}}
+
+.lead-amounts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}.amount-field{display:grid;gap:6px;color:var(--muted);font-size:12px}.amount-field input{width:100%;padding:9px 10px;font-size:14px}@media(max-width:550px){.lead-amounts{grid-template-columns:1fr}}
