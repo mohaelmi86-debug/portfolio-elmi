@@ -6,10 +6,10 @@ const isAllowedOrigin = (origin: string | null) => !!origin && (
   (origin.startsWith("https://deploy-preview-") && origin.endsWith("--elmihdhoirmohamedali.netlify.app"))
 );
 const corsHeaders = (origin: string | null) => ({
-  "Access-Control-Allow-Origin": isAllowedOrigin(origin) ? origin! : allowedOrigin,
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "GET, PATCH, OPTIONS",
-  "Vary": "Origin",
+
 });
 const json = (body: unknown, status = 200, origin: string | null = null) => new Response(JSON.stringify(body), {
   status, headers: { ...corsHeaders(origin), "Content-Type": "application/json" },
