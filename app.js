@@ -2,7 +2,7 @@
   "use strict";
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-  const state = { profile: null, projects: [], skills: [], journey: [], trainings: [], category: "Tous", query: "", visible: new Set() };
+  const state = { profile: null, projects: [], services: [], skills: [], journey: [], trainings: [], category: "Tous", query: "", visible: new Set() };
   const storageKey = "portfolio-elmi-visible-projects-v1";
   const icons = { Finance:"▥", Lecture:"▣", Industrie:"⚙", Éducation:"✦", Commerce:"◇", Laboratoire:"⌕", Santé:"✚", Fintech:"◈", Impact:"♻", Construction:"⌂", Data:"⌗", Innovation:"✧" };
 
@@ -37,6 +37,34 @@
       tech: xmlItems(p, "technologies > item"), business: xmlText(p, "businessModel"),
       next: xmlText(p, "nextSteps"), tags: xmlItems(p, "tags > item")
     }));
+  }
+  function parseServices(xml) {
+    return [...xml.querySelectorAll("services > service")].map(item => ({
+      id: item.getAttribute("id") || "", icon: xmlText(item, "icon"),
+      name: xmlText(item, "name"), tagline: xmlText(item, "tagline"),
+      description: xmlText(item, "description"),
+      deliverables: xmlItems(item, "deliverables > item"),
+      price: xmlText(item, "price"), cta: xmlText(item, "cta")
+    }));
+  }
+  function renderServices() {
+    const root = $("#services-grid");
+    if (!root) return;
+    root.replaceChildren();
+    state.services.forEach(service => {
+      const card = node("article", "service-card");
+      card.append(node("div", "service-icon", service.icon || "✦"));
+      card.append(node("h3", "", service.name));
+      card.append(node("p", "service-tagline", service.tagline));
+      card.append(node("p", "service-description", service.description));
+      const list = node("ul", "service-deliverables");
+      (service.deliverables || []).forEach(item => list.append(node("li", "", item)));
+      card.append(list);
+      const bottom = node("div", "service-bottom");
+      bottom.append(node("span", "service-price", service.price || "Sur devis"));
+      const link = node("a", "service-cta", service.cta || "Discuter ↗");
+      link.href = "#contact"; bottom.append(link); card.append(bottom); root.append(card);
+    });
   }
   function parseSkills(xml) {
     return [...xml.querySelectorAll("skill-groups > group")].map(group => ({
@@ -305,15 +333,15 @@
   }
   async function init() {
     try {
-      const [profileXML, projectsXML, skillsXML, journeyXML, trainingsXML] = await Promise.all([
-        loadXML("data/profile.xml"), loadXML("data/projects.xml"), loadXML("data/skills.xml"), loadXML("data/journey.xml"), loadXML("data/formations.xml")
+      const [profileXML, projectsXML, servicesXML, skillsXML, journeyXML, trainingsXML] = await Promise.all([
+        loadXML("data/profile.xml"), loadXML("data/projects.xml"), loadXML("data/services.xml"), loadXML("data/skills.xml"), loadXML("data/journey.xml"), loadXML("data/formations.xml")
       ]);
       state.profile = parseProfile(profileXML);
       state.projects = parseProjects(projectsXML);
       state.skills = parseSkills(skillsXML);
       state.journey = parseJourney(journeyXML);
       state.trainings = parseTrainings(trainingsXML);
-      safeSavedSelection(); renderProfile(); renderSkills(); renderJourney(); renderTrainings(); buildFilters(); renderPicker(); renderProjects(); populateInvestorProjects(); bindInteractions();
+      safeSavedSelection(); renderProfile(); renderServices(); renderSkills(); renderJourney(); renderTrainings(); buildFilters(); renderPicker(); renderProjects(); populateInvestorProjects(); bindInteractions();
       $("#year").textContent = new Date().getFullYear();
     } catch (error) {
       console.error(error);
