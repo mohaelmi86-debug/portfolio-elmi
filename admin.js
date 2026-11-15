@@ -16,14 +16,14 @@ async function loadLeads(){
  if(!client||busy)return;setBusy(true);feedback("load-message","Chargement…");
  try{
   const {data:{session}}=await client.auth.getSession();if(!session){showSession(null);return;}
-  const status=$("status-filter").value,qs=new URLSearchParams({page:String(page),size:"25"});if(status)qs.set("status",status);if(clientsMode)qs.set("stage","won");
+  const status=$("status-filter").value,qs=new URLSearchParams({page:String(page),size:"25"});if(status)qs.set("status",status);if(clientsMode)qs.set("clients","1");
   const res=await fetch(`${cfg.supabaseUrl}/functions/v1/admin-leads?${qs}`,{headers:{Authorization:`Bearer ${session.access_token}`,apikey:cfg.supabaseAnonKey}});
   const body=await res.json();if(!res.ok)throw new Error(body.error||"Chargement impossible.");
   leads=body.data||[];total=body.count||0;$("total-count").textContent=String(total);$("new-count").textContent=String(body.newCount??0);$("shown-count").textContent=String(leads.length);$("page-label").textContent=`Page ${page+1}`;
   const kpiRes=await fetch(`${cfg.supabaseUrl}/functions/v1/admin-leads`,{method:"PATCH",headers:{Authorization:`Bearer ${session.access_token}`,apikey:cfg.supabaseAnonKey,"Content-Type":"application/json"},body:JSON.stringify({action:"dashboard"})});
   const kpi=await kpiRes.json();if(!kpiRes.ok)throw new Error(kpi.error||"KPIs indisponibles.");
   $("kpi-new").textContent=String(kpi.stats.new??0);$("kpi-contacted").textContent=String(kpi.stats.contacted??0);$("kpi-qualified").textContent=String(kpi.stats.qualified??0);$("kpi-proposal").textContent=String(kpi.stats.proposal??0);$("kpi-won").textContent=String(kpi.stats.won??0);$("kpi-lost").textContent=String(kpi.stats.lost??0);$("kpi-conversion").textContent=`${kpi.conversion??0}%`;$("kpi-late").textContent=String(kpi.late??0);$("kpi-estimate").textContent=money(kpi.estimatedAmount);$("kpi-proposals-eur").textContent=money(kpi.proposalAmount);$("kpi-revenue").textContent=money(kpi.signedRevenue);renderPipeline(kpi.stats,kpi.total??0);
-  renderLeads();$("crm-title").textContent=clientsMode?"Clients gagnés":"Demandes entrantes";$("export-csv").textContent=clientsMode?"⇩ Export clients CSV":"⇩ Export CSV";feedback("load-message",clientsMode?`${total} client(s) gagné(s)`:total?`${total} demande(s)`:"Aucune demande.");$("clients-view").textContent=clientsMode?"← Retour aux demandes":"👥 Clients gagnés";
+  if(clientsMode)renderClients();else renderLeads();$("crm-title").textContent=clientsMode?"Clients gagnés":"Demandes entrantes";$("export-csv").textContent=clientsMode?"⇩ Export clients CSV":"⇩ Export CSV";feedback("load-message",clientsMode?`${total} client(s) gagné(s)`:total?`${total} demande(s)`:"Aucune demande.");$("clients-view").textContent=clientsMode?"← Retour aux demandes":"👥 Clients gagnés";
  }catch(e){feedback("load-message",e.message||"Erreur réseau.",true);}finally{setBusy(false);}
 }
 function renderLeads(){
@@ -59,7 +59,17 @@ function renderLeads(){
   card.append(histBtn,histBox);root.append(card);
  });
 }
-async function updateLead(id,patch,control){
+async function convertClient(leadId,button){
+ button.disabled=true;
+ try{const {data:{session}}=await client.auth.getSession();const res=await fetch(`${cfg.supabaseUrl}/functions/v1/admin-leads`,{method:"POST",headers:{Authorization:`Bearer ${session.access_token}`,apikey:cfg.supabaseAnonKey,"Content-Type":"application/json"},body:JSON.stringify({action:"convert",lead_id:leadId})});const body=await res.json();if(!res.ok)throw new Error(body.error||"Conversion impossible.");feedback("load-message","Prospect converti en client.");clientsMode=true;page=0;await loadLeads();}catch(e){feedback("load-message",e.message,true);button.disabled=false;}
+}
+function renderClients(){
+ const root=$("leads-list");root.replaceChildren();const term=$("search").value.trim().toLowerCase();
+ const filtered=leads.filter(c=>[c.name,c.email,c.organization,c.phone,c.notes].join(" ").toLowerCase().includes(term));
+ if(!filtered.length){root.append(node("div","panel lead-card",term?"Aucun résultat sur cette page.":"Aucun client enregistré."));return;}
+ filtered.forEach(c=>{const card=node("article","lead-card"),top=node("div","lead-top"),left=node("div","");left.append(node("h3","",c.name),node("div","lead-meta",c.organization||"Client particulier"));if(c.email){const a=node("a","",c.email);a.href=`mailto:${c.email}`;left.append(a);}top.append(left,node("span","status",c.status==="active"?"Actif":"Inactif"));card.append(top,node("div","lead-meta",`Client depuis le ${new Date(c.created_at).toLocaleDateString("fr-FR")}`));if(c.phone)card.append(node("p","lead-meta","Téléphone : "+c.phone));if(c.notes)card.append(node("p","lead-message",c.notes));root.append(card);});
+}
+\nasync function updateLead(id,patch,control){
  control.disabled=true;
  try{
   const {data:{session}}=await client.auth.getSession();if(!session)throw new Error("Session expirée.");
