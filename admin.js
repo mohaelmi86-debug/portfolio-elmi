@@ -28,7 +28,7 @@ async function loadLeads() {
     const res=await fetch(`${cfg.supabaseUrl}/functions/v1/admin-leads?${qs}`,{headers:{Authorization:`Bearer ${session.access_token}`,apikey:cfg.supabaseAnonKey}});
     const body=await res.json(); if(!res.ok)throw new Error(body.error||"Chargement impossible.");
     leads=body.data||[];total=body.count||0;
-    $("total-count").textContent=String(total);$("new-count").textContent=String(leads.filter(x=>x.status==="new").length);$("shown-count").textContent=String(leads.length);$("page-label").textContent=`Page ${page+1}`;
+    $("total-count").textContent=String(total);$("new-count").textContent=String(body.newCount??0);$("shown-count").textContent=String(leads.length);$("page-label").textContent=`Page ${page+1}`;
     renderLeads();feedback("load-message",total?`${total} demande(s)`:"Aucune demande.");
   } catch(e){feedback("load-message",e.message||"Erreur réseau.",true);}
   finally{setBusy(false);}
