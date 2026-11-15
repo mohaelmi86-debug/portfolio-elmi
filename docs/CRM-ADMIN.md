@@ -33,6 +33,14 @@ Le contrôle JWT de `admin-leads` est effectué dans le code avec `auth.getUser(
 - Statuts : `new`, `in_progress`, `qualified`, `closed`, `spam`.
 - Requiert `Authorization: Bearer <access_token Supabase Auth>` d'un compte dont l'e-mail figure dans `PORTFOLIO_ADMIN_EMAILS`.
 
+## État actuel (15 novembre 2026)
+
+- Projet Supabase PORFOLIO actif en région `eu-west-3`.
+- Table `contact_leads` créée, RLS activée et aucun accès direct anon/authenticated.
+- Edge Functions `submit-lead` et `admin-leads` déployées.
+- Interface `admin.html` versionnée sur `feature/portfolio-2.0`.
+- Restent à faire : compte admin Auth, secrets allowlist/origine, publication Netlify et tests E2E.
+
 ## Contrôles avant mise en production
 
 1. Restreindre CORS à l'origine Netlify / domaine final.
