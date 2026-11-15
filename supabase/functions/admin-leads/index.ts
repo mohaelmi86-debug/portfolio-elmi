@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.0";
 const allowedOrigin = Deno.env.get("PORTFOLIO_ALLOWED_ORIGIN") ?? "https://elmihdhoirm Mohamedali.netlify.app";
 const isAllowedOrigin = (origin: string | null) => !!origin && (
   origin === allowedOrigin ||
-  /^https:\/\/deploy-preview-\d+--elmihdhoirmohamedali\.netlify\.app$/.test(origin)
+  (origin.startsWith("https://deploy-preview-") && origin.endsWith("--elmihdhoirmohamedali.netlify.app"))
 );
 const corsHeaders = (origin: string | null) => ({
   "Access-Control-Allow-Origin": isAllowedOrigin(origin) ? origin! : allowedOrigin,
