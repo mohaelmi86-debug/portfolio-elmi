@@ -17,8 +17,7 @@ La migration `supabase/migrations/202611150001_contact_leads.sql` crée la boît
 - Consentement : ne collecter que les données nécessaires à la réponse, afficher une information de confidentialité et conserver la date du consentement.
 
 ## Prochaine configuration
-1. Créer un projet Supabase distinct nommé PORFOLIO (région UE, idéalement eu-west-3).
-2. Appliquer la migration.
-3. Déployer une Edge Function `submit-lead` avec validation + anti-spam.
-4. Configurer les secrets serveur et l'URL publique dans Netlify.
-5. Ajouter l'authentification admin, la vue pipeline CRM et les tests RLS.
+1. Le projet Supabase PORFOLIO est créé (région UE eu-west-3) et les Edge Functions `submit-lead` et `admin-leads` sont déployées.
+2. La table `contact_leads` et sa politique RLS restrictive sont déjà en place.
+3. Créer le compte Auth administrateur, puis renseigner `PORTFOLIO_ADMIN_EMAILS` et `PORTFOLIO_ALLOWED_ORIGIN` dans les secrets Edge Functions.
+4. Publier le site sur Netlify et effectuer les tests navigateur/E2E avant ouverture.
