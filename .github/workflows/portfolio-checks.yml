@@ -16,7 +16,9 @@ jobs:
           node-version: 22
       - name: Check admin JavaScript syntax
         run: node --check admin.js
-      - name: CRM DOM and security smoke checks\n        run: node scripts/portfolio-smoke.mjs\n      - name: Check public JavaScript syntax
+      - name: CRM DOM and security smoke checks
+        run: node scripts/portfolio-smoke.mjs
+      - name: Check public JavaScript syntax
         run: |
           for file in *.js; do
             [ -f "$file" ] && node --check "$file"
