@@ -8,12 +8,12 @@ const corsHeaders = {
   "Vary": "Origin",
 };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
-  status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+  status, headers: { ...corsHeaders(null), "Content-Type": "application/json" },
 });
 
 Deno.serve(async (req) => {
   const origin = req.headers.get("Origin");
-  if (origin && origin !== allowedOrigin) return json({ error: "Origine non autorisée." }, 403);
+  if (origin && !isAllowedOrigin(origin)) return json({ error: "Origine non autorisée." }, 403);
   if (req.method === "OPTIONS") {
     if (origin && origin !== allowedOrigin) return new Response(null, { status: 403 });
     return new Response("ok", { headers: corsHeaders });
