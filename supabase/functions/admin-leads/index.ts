@@ -55,6 +55,21 @@ Deno.serve(async (req) => {
 
   let payload: Record<string, unknown>;
   try { payload = await req.json(); } catch { return json({ error: "JSON invalide." }, 400); }
+  if (payload.action === "dashboard") {
+    const { data: rows, error } = await db.from("contact_leads").select("pipeline_stage,estimated_amount,proposal_amount,signed_amount,next_action_at");
+    if (error) return json({ error: "Calcul des indicateurs impossible." }, 500);
+    const stats = { new:0, contacted:0, qualified:0, proposal:0, won:0, lost:0 };
+    let estimatedAmount=0, proposalAmount=0, signedRevenue=0, late=0;
+    const now=Date.now();
+    for (const row of rows ?? []) {
+      const stage=String(row.pipeline_stage||"new"); if(stage in stats) stats[stage]++;
+      estimatedAmount+=Number(row.estimated_amount||0); proposalAmount+=Number(row.proposal_amount||0);
+      signedRevenue+=Number(row.signed_amount||0);
+      if(row.next_action_at && Date.parse(row.next_action_at)<now && !["won","lost"].includes(stage))late++;
+    }
+    const total=rows?.length??0;
+    return json({stats,total,late,conversion:total?Math.round(stats.won/total*100):0,estimatedAmount,proposalAmount,signedRevenue});
+  }
   const id = typeof payload.id === "string" ? payload.id : "";
   const allowed = ["status", "internal_notes", "pipeline_stage", "next_action", "next_action_at", "estimated_amount", "proposal_amount", "signed_amount"];
   const patch: Record<string, unknown> = {};
