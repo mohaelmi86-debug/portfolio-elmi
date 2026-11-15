@@ -47,7 +47,10 @@ Deno.serve(async (req) => {
     if (status && ["new", "in_progress", "qualified", "closed", "spam"].includes(status)) query = query.eq("status", status);
     const { data, error, count } = await query;
     if (error) return json({ error: "Lecture des demandes impossible." }, 500);
-    return json({ data, count, page, size });
+    const { count: newCount, error: newCountError } = await db.from("contact_leads")
+      .select("id", { count: "exact", head: true }).eq("status", "new");
+    if (newCountError) return json({ error: "Comptage des demandes impossible." }, 500);
+    return json({ data, count, newCount, page, size });
   }
 
   let payload: { id?: string; status?: string };
