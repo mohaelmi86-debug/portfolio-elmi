@@ -1,3 +1,4 @@
+// PORFOLIO CRM — build refresh 2026-11-15
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.0";
 
 const cfg = window.PORTFOLIO_CONFIG ?? {};
