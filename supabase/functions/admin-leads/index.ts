@@ -1,16 +1,23 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.0";
 
+const allowedOrigin = Deno.env.get("PORTFOLIO_ALLOWED_ORIGIN") ?? "https://elmihdhoirmohamedali.netlify.app";
 const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("PORTFOLIO_ALLOWED_ORIGIN") ?? "*",
+  "Access-Control-Allow-Origin": allowedOrigin,
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "GET, PATCH, OPTIONS",
+  "Vary": "Origin",
 };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { ...corsHeaders, "Content-Type": "application/json" },
 });
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const origin = req.headers.get("Origin");
+  if (origin && origin !== allowedOrigin) return json({ error: "Origine non autorisée." }, 403);
+  if (req.method === "OPTIONS") {
+    if (origin && origin !== allowedOrigin) return new Response(null, { status: 403 });
+    return new Response("ok", { headers: corsHeaders });
+  }
   if (!["GET", "PATCH"].includes(req.method)) return json({ error: "Méthode non autorisée." }, 405);
 
   const url = Deno.env.get("SUPABASE_URL");
