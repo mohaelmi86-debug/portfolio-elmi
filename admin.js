@@ -22,7 +22,7 @@ async function loadLeads(){
   leads=body.data||[];total=body.count||0;$("total-count").textContent=String(total);$("new-count").textContent=String(body.newCount??0);$("shown-count").textContent=String(leads.length);$("page-label").textContent=`Page ${page+1}`;
   const kpiRes=await fetch(`${cfg.supabaseUrl}/functions/v1/admin-leads`,{method:"PATCH",headers:{Authorization:`Bearer ${session.access_token}`,apikey:cfg.supabaseAnonKey,"Content-Type":"application/json"},body:JSON.stringify({action:"dashboard"})});
   const kpi=await kpiRes.json();if(!kpiRes.ok)throw new Error(kpi.error||"KPIs indisponibles.");
-  $("kpi-new").textContent=String(kpi.stats.new??0);$("kpi-contacted").textContent=String(kpi.stats.contacted??0);$("kpi-qualified").textContent=String(kpi.stats.qualified??0);$("kpi-proposal").textContent=String(kpi.stats.proposal??0);$("kpi-won").textContent=String(kpi.stats.won??0);$("kpi-lost").textContent=String(kpi.stats.lost??0);$("kpi-conversion").textContent=`${kpi.conversion??0}%`;$("kpi-late").textContent=String(kpi.late??0);renderPipeline(kpi.stats,kpi.total??0);
+  $("kpi-new").textContent=String(kpi.stats.new??0);$("kpi-contacted").textContent=String(kpi.stats.contacted??0);$("kpi-qualified").textContent=String(kpi.stats.qualified??0);$("kpi-proposal").textContent=String(kpi.stats.proposal??0);$("kpi-won").textContent=String(kpi.stats.won??0);$("kpi-lost").textContent=String(kpi.stats.lost??0);$("kpi-conversion").textContent=`${kpi.conversion??0}%`;$("kpi-late").textContent=String(kpi.late??0);$("kpi-estimate").textContent=money(kpi.estimatedAmount);$("kpi-proposals-eur").textContent=money(kpi.proposalAmount);$("kpi-revenue").textContent=money(kpi.signedRevenue);renderPipeline(kpi.stats,kpi.total??0);
   renderLeads();feedback("load-message",total?`${total} demande(s)`:"Aucune demande.");
  }catch(e){feedback("load-message",e.message||"Erreur réseau.",true);}finally{setBusy(false);}
 }
@@ -37,7 +37,7 @@ function renderLeads(){
   const date=lead.created_at?new Date(lead.created_at).toLocaleString("fr-FR"):"Date inconnue";
   card.append(node("div","lead-meta",[date,lead.request_type,lead.organization,lead.service_slug,lead.project_slug].filter(Boolean).join(" · ")));
   if(lead.budget_range||lead.timeline)card.append(node("div","lead-meta",[`Budget : ${lead.budget_range||"—"}`, `Délai : ${lead.timeline||"—"}`].join(" · ")));
-  card.append(node("p","lead-message",lead.message||"(Sans message)"));
+  card.append(node("p","lead-message",lead.message||"(Sans message)"));\n  const amounts=node("div","lead-amounts");[[ "estimated_amount","Valeur estimée (€)" ],["proposal_amount","Proposition (€)"],["signed_amount","CA signé (€)"]].forEach(([key,label])=>{const wrap=node("label","amount-field",label),inp=node("input");inp.type="number";inp.min="0";inp.step="0.01";inp.value=String(lead[key]??0);inp.setAttribute("aria-label",label);wrap.append(inp);amounts.append(wrap);inp.addEventListener("change",()=>updateLead(lead.id,{[key]:Number(inp.value)},inp));});card.append(amounts);
   const controls=node("div","lead-controls"),select=node("select");select.setAttribute("aria-label",`Statut de ${lead.name}`);
   Object.entries(labels).forEach(([value,label])=>{const o=node("option","",label);o.value=value;o.selected=value===lead.status;select.append(o);});
   select.addEventListener("change",()=>updateLead(lead.id,{status:select.value},select));controls.append(select);
@@ -64,7 +64,7 @@ async function updateLead(id,patch,control){
   const {data:{session}}=await client.auth.getSession();if(!session)throw new Error("Session expirée.");
   const res=await fetch(`${cfg.supabaseUrl}/functions/v1/admin-leads`,{method:"PATCH",headers:{Authorization:`Bearer ${session.access_token}`,apikey:cfg.supabaseAnonKey,"Content-Type":"application/json"},body:JSON.stringify({id,...patch})});
   const body=await res.json();if(!res.ok)throw new Error(body.error||"Mise à jour impossible.");
-  feedback("load-message",patch.status?"Statut mis à jour.":patch.pipeline_stage?"Étape commerciale mise à jour.":patch.next_action!==undefined?"Relance enregistrée.":"Notes enregistrées.");await loadLeads();
+  feedback("load-message",patch.estimated_amount!==undefined||patch.proposal_amount!==undefined||patch.signed_amount!==undefined?"Montant commercial enregistré.":patch.status?"Statut mis à jour.":patch.pipeline_stage?"Étape commerciale mise à jour.":patch.next_action!==undefined?"Relance enregistrée.":"Notes enregistrées.");await loadLeads();
  }catch(e){feedback("load-message",e.message,true);control.disabled=false;}
 }
 $("login-form").addEventListener("submit",async e=>{e.preventDefault();if(!client){feedback("login-message","Configuration Supabase manquante dans admin-config.js.",true);return;}feedback("login-message","Connexion…");const {data,error}=await client.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error){feedback("login-message",error.message,true);return;}showSession(data.user);feedback("login-message","");page=0;loadLeads();});
@@ -73,7 +73,7 @@ $("refresh").addEventListener("click",loadLeads);$("previous").addEventListener(
 $("status-filter").addEventListener("change",()=>{page=0;loadLeads();});$("search").addEventListener("input",renderLeads);
 if(!client)feedback("login-message","Ajoutez la clé anon publique dans admin-config.js pour activer la connexion.",true);else client.auth.getSession().then(({data})=>{showSession(data.session?.user||null);if(data.session)loadLeads();});
 
-function renderPipeline(stats,total){
+function money(v){return new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(Number(v||0)}\nfunction renderPipeline(stats,total){
  const root=$("pipeline-bars");if(!root)return;root.replaceChildren();
  const items=[["Nouveaux",stats.new],["Contactés",stats.contacted],["Qualifiés",stats.qualified],["Propositions",stats.proposal],["Gagnés",stats.won],["Perdus",stats.lost]];
  items.forEach(([label,value])=>{
