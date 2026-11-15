@@ -77,7 +77,8 @@ Deno.serve(async (req) => {
   if (!id || Object.keys(patch).length === 0) return json({ error: "Identifiant ou champs invalides." }, 400);
   if ("status" in patch && !["new", "in_progress", "qualified", "closed", "spam"].includes(String(patch.status))) return json({ error: "Statut invalide." }, 400);
   if ("pipeline_stage" in patch && !["new", "contacted", "qualified", "proposal", "won", "lost"].includes(String(patch.pipeline_stage))) return json({ error: "Étape commerciale invalide." }, 400);
-  for (const key of ["estimated_amount","proposal_amount","signed_amount"]) if (key in patch && (typeof patch[key] !== "number" || !Number.isFinite(patch[key]) || patch[key] < 0 || patch[key] > 1000000000)) return json({ error: `Montant ${key} invalide.` }, 400);\n  if ("internal_notes" in patch && (typeof patch.internal_notes !== "string" || patch.internal_notes.length > 5000)) return json({ error: "Notes invalides (5000 caractères maximum)." }, 400);
+  for (const key of ["estimated_amount","proposal_amount","signed_amount"]) if (key in patch && (typeof patch[key] !== "number" || !Number.isFinite(patch[key]) || patch[key] < 0 || patch[key] > 1000000000)) return json({ error: `Montant ${key} invalide.` }, 400);
+  if ("internal_notes" in patch && (typeof patch.internal_notes !== "string" || patch.internal_notes.length > 5000)) return json({ error: "Notes invalides (5000 caractères maximum)." }, 400);
   if ("next_action" in patch && patch.next_action !== null && (typeof patch.next_action !== "string" || patch.next_action.length > 500)) return json({ error: "Action invalide." }, 400);
   if ("next_action_at" in patch && patch.next_action_at !== null && (typeof patch.next_action_at !== "string" || Number.isNaN(Date.parse(patch.next_action_at)))) return json({ error: "Date de relance invalide." }, 400);
   const { data, error } = await db.from("contact_leads").update(patch).eq("id", id)
