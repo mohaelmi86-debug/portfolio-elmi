@@ -7,7 +7,7 @@ const isAllowedOrigin = (origin: string | null) => !!origin && (
   /^https:\/\/[a-f0-9]+--elmihdhoirmohamedali\.netlify\.app$/.test(origin)
 );
 const corsHeaders = (origin: string | null) => ({
-  "Access-Control-Allow-Origin": origin ?? "https://elmihdhoirm Mohamedali.netlify.app",
+  "Access-Control-Allow-Origin": origin && isAllowedOrigin(origin) ? origin : allowedOrigin,
   "Vary": "Origin",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "GET, PATCH, POST, OPTIONS",
