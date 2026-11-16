@@ -43,6 +43,13 @@ Deno.serve(async (req) => {
   }
 
   const db = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } });
+  if (req.method === "GET" && urlSafe(req.url, "documents") === "1") {
+    const clientId=urlSafe(req.url,"client_id");
+    if(!clientId||!/^[0-9a-f-]{36}$/i.test(clientId))return json({error:"Client invalide."},400,origin);
+    const {data,error}=await db.from("crm_documents").select("id,client_id,document_type,reference,title,amount,status,issue_date,due_date,notes,created_at").eq("client_id",clientId).order("issue_date",{ascending:false}).limit(100);
+    if(error)return json({error:"Documents client indisponibles."},500,origin);
+    return json({data},200,origin);
+  }
   if (req.method === "GET" && urlSafe(req.url, "interactions") === "1") {
     const clientId = urlSafe(req.url, "client_id");
     if (!clientId || !/^[0-9a-f-]{36}$/i.test(clientId)) return json({ error: "Client invalide." }, 400, origin);
@@ -69,6 +76,21 @@ Deno.serve(async (req) => {
 
   let payload: Record<string, unknown>;
   try { payload = await req.json(); } catch { return json({ error: "JSON invalide." }, 400); }
+  if (req.method === "POST" && payload.action === "create_document") {
+    const clientId=typeof payload.client_id==="string"?payload.client_id:"";
+    const type=String(payload.document_type??"");
+    const reference=typeof payload.reference==="string"?payload.reference.trim():"";
+    const title=typeof payload.title==="string"?payload.title.trim():"";
+    const amount=Number(payload.amount);
+    const status=String(payload.status??"draft");
+    const issueDate=typeof payload.issue_date==="string"?payload.issue_date:"";
+    const dueDate=typeof payload.due_date==="string"?payload.due_date:null;
+    const notes=typeof payload.notes==="string"?payload.notes.trim():"";
+    if(!/^[0-9a-f-]{36}$/i.test(clientId)||!["quote","invoice"].includes(type)||!reference||reference.length>80||!title||title.length>255||!Number.isFinite(amount)||amount<0||amount>1e9||!["draft","sent","accepted","paid","overdue","cancelled"].includes(status)|| (issueDate&&!/^\d{4}-\d{2}-\d{2}$/.test(issueDate))||(dueDate&&!/^\d{4}-\d{2}-\d{2}$/.test(dueDate))||notes.length>5000)return json({error:"Données document invalides."},400,origin);
+    const {data,error}=await db.from("crm_documents").insert({client_id:clientId,document_type:type,reference,title,amount,status,issue_date:issueDate||new Date().toISOString().slice(0,10),due_date:dueDate||null,notes:notes||null,created_by:user.email}).select("id,client_id,document_type,reference,title,amount,status,issue_date,due_date,notes,created_at").single();
+    if(error)return json({error:"Création du document impossible (référence peut-être déjà utilisée)."},500,origin);
+    return json({data},201,origin);
+  }
   if (req.method === "POST" && payload.action === "create_interaction") {
     const clientId = typeof payload.client_id === "string" ? payload.client_id : "";
     const type = String(payload.interaction_type ?? "");
