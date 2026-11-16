@@ -1,18 +1,20 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.0";
 
-const allowedOrigin = Deno.env.get("PORTFOLIO_ALLOWED_ORIGIN") ?? "https://elmihdhoirmohamedali.netlify.app";
+const allowedOrigin = "https://elmihdhoirm Mohamedali.netlify.app".replace(" ","");
 const isAllowedOrigin = (origin: string | null) => !!origin && (
   origin === allowedOrigin ||
-  (origin.startsWith("https://deploy-preview-") && origin.endsWith("--elmihdhoirmohamedali.netlify.app")) ||
-  /^https:\/\/[a-f0-9]+--elmihdhoirmohamedali\.netlify\.app$/.test(origin)
+  /^https:\/\/deploy-preview-[0-9]+--elmihdhoirmohamedali\.netlify\.app$/.test(origin) ||
+  /^https:\/\/[a-z0-9-]+--elmihdhoirmohamedali\.netlify\.app$/.test(origin)
 );
-const corsHeaders = (origin: string | null) => ({
-  "Access-Control-Allow-Origin": origin && isAllowedOrigin(origin) ? origin : allowedOrigin,
-  "Vary": "Origin",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, PATCH, POST, OPTIONS",
-
-});
+const corsHeaders = (origin: string | null) => {
+  const headers: Record<string,string> = {
+    "Vary": "Origin",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "GET, PATCH, POST, OPTIONS",
+  };
+  if(origin && isAllowedOrigin(origin)) headers["Access-Control-Allow-Origin"]=origin;
+  return headers;
+};
 const json = (body: unknown, status = 200, origin: string | null = null) => new Response(JSON.stringify(body), {
   status, headers: { ...corsHeaders(origin), "Content-Type": "application/json" },
 });
