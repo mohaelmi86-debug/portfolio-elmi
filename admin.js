@@ -136,3 +136,12 @@ async function updateClient(id,patch,button){
  feedback("load-message","Fiche client enregistrée.");await loadLeads();
  }catch(e){feedback("load-message",e.message||"Erreur réseau.",true);button.disabled=false;}
 }
+
+function escapeHtml(value){return String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/\'/g,"&#39;");}\nfunction money(v){return new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(Number(v||0));}
+
+$("login-form").addEventListener("submit",async e=>{e.preventDefault();if(!client){feedback("login-message","Configuration Supabase manquante dans admin-config.js.",true);return;}feedback("login-message","Connexion…");const {data,error}=await client.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error){feedback("login-message",error.message,true);return;}showSession(data.user);feedback("login-message","");page=0;loadLeads();});
+$("logout").addEventListener("click",async()=>{await client?.auth.signOut();showSession(null);});
+$("clients-view").addEventListener("click",()=>{clientsMode=!clientsMode;page=0;loadLeads();});$("refresh").addEventListener("click",loadLeads);$("export-csv").addEventListener("click",exportCsv);$("previous").addEventListener("click",()=>{if(page>0){page--;loadLeads();}});$("next").addEventListener("click",()=>{if((page+1)*25<total){page++;loadLeads();}});
+$("status-filter").addEventListener("change",()=>{page=0;loadLeads();});$("search").addEventListener("input",renderLeads);
+if(!client)feedback("login-message","Ajoutez la clé anon publique dans admin-config.js pour activer la connexion.",true);else client.auth.getSession().then(({data})=>{showSession(data.session?.user||null);if(data.session)loadLeads();});
+
