@@ -41,5 +41,5 @@ test("quotes, invoices, payments and documents have frontend/API wiring", () => 
 test("Supabase function and Netlify configuration are present", () => {
   assert.ok(existsSync("supabase/functions/admin-leads/index.ts"));
   assert.ok(existsSync("netlify.toml"));
-  assert.match(read("netlify.toml"), /publish\\s*=\\s*["']\\.["']/);
+  assert.ok(read("netlify.toml").includes('publish = "."'));
 });
