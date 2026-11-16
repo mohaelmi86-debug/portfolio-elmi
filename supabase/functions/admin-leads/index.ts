@@ -43,6 +43,21 @@ Deno.serve(async (req) => {
   }
 
   const db = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } });
+  if (req.method === "GET" && urlSafe(req.url,"finance") === "1") {
+    const [{data:docs,error:de},{data:pays,error:pe}]=await Promise.all([
+      db.from("crm_documents").select("id,document_type,status,amount,issue_date,due_date,reference,title,client_id").order("issue_date",{ascending:false}).limit(1000),
+      db.from("crm_payments").select("document_id,amount,payment_date,payment_method").order("payment_date",{ascending:false}).limit(5000)
+    ]);
+    if(de||pe)return json({error:"Synthèse financière indisponible."},500,origin);
+    const invoices=(docs||[]).filter(x=>x.document_type==="invoice"&&x.status!=="cancelled");
+    const quotes=(docs||[]).filter(x=>x.document_type==="quote"&&x.status!=="cancelled");
+    const paidBy={};(pays||[]).forEach(p=>paidBy[p.document_id]=(paidBy[p.document_id]||0)+Number(p.amount));
+    const totalInvoiced=invoices.reduce((n,x)=>n+Number(x.amount),0);
+    const collected=(pays||[]).reduce((n,p)=>n+Number(p.amount),0);
+    const outstanding=invoices.reduce((n,x)=>n+Math.max(0,Number(x.amount)-(paidBy[x.id]||0)),0);
+    const overdue=invoices.filter(x=>x.due_date&&x.due_date<new Date().toISOString().slice(0,10)&&Number(x.amount)>(paidBy[x.id]||0));
+    return json({data:{total_invoiced:totalInvoiced,collected,outstanding,overdue_amount:overdue.reduce((n,x)=>n+Number(x.amount)-(paidBy[x.id]||0),0),overdue_count:overdue.length,quotes_total:quotes.reduce((n,x)=>n+Number(x.amount),0),invoice_count:invoices.length,documents:docs||[],payments:pays||[]}},200,origin);
+  }
   if (req.method === "GET" && urlSafe(req.url,"payments") === "1") {
     const documentId=urlSafe(req.url,"document_id");
     if(!documentId||!/^[0-9a-f-]{36}$/i.test(documentId))return json({error:"Document invalide."},400,origin);
