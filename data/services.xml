@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<services>
+  <service id="product-design">
+    <icon>✦</icon><name>Conception produit &amp; MVP</name>
+    <tagline>De l'idée au prototype testable</tagline>
+    <description>Cadrage fonctionnel et conception d'une première version utile, avec une approche centrée sur les utilisateurs et les besoins métier.</description>
+    <deliverables><item>Ateliers de cadrage &amp; user flows</item><item>Spécifications fonctionnelles</item><item>Prototype / MVP et plan d'évolution</item></deliverables>
+    <price>Sur devis</price><cta>Parler de mon projet ↗</cta>
+  </service>
+  <service id="ai-automation">
+    <icon>⌘</icon><name>IA &amp; automatisation</name>
+    <tagline>Réduire les tâches répétitives</tagline>
+    <description>Identification des cas d'usage pertinents, intégration d'assistants IA et automatisation de processus, avec validation humaine.</description>
+    <deliverables><item>Analyse du processus</item><item>Prototype d'automatisation</item><item>Documentation et prise en main</item></deliverables>
+    <price>Sur devis</price><cta>Étudier un cas d'usage ↗</cta>
+  </service>
+  <service id="business-apps">
+    <icon>▦</icon><name>Applications métier &amp; SaaS</name>
+    <tagline>Des outils adaptés aux équipes</tagline>
+    <description>Conception d'interfaces et de workflows pour digitaliser la gestion, le suivi opérationnel et les activités d'une organisation.</description>
+    <deliverables><item>Architecture fonctionnelle</item><item>Interfaces et workflows</item><item>Plan de déploiement et évolutions</item></deliverables>
+    <price>Sur devis</price><cta>Décrire mon besoin ↗</cta>
+  </service>
+  <service id="audit-data">
+    <icon>⌗</icon><name>Audit &amp; structuration digitale</name>
+    <tagline>Clarifier avant d'investir</tagline>
+    <description>Diagnostic de l'existant, analyse des risques et recommandations priorisées pour améliorer un produit, un processus ou un système.</description>
+    <deliverables><item>État des lieux</item><item>Risques et recommandations</item><item>Feuille de route priorisée</item></deliverables>
+    <price>Sur devis</price><cta>Demander un diagnostic ↗</cta>
+  </service>
+</services>

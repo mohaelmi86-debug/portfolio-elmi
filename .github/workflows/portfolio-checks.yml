@@ -1,0 +1,43 @@
+name: Portfolio checks
+
+on:
+  push:
+    branches: [feature/portfolio-2.0]
+  pull_request:
+    branches: [main]
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check admin JavaScript syntax
+        run: node --check admin.js
+      - name: CRM DOM and security smoke checks
+        run: node scripts/portfolio-smoke.mjs
+      - name: CRM regression suite
+        run: node --test tests/*.test.mjs
+      - name: Check public JavaScript syntax
+        run: |
+          for file in *.js; do
+            [ -f "$file" ] && node --check "$file"
+          done
+
+  crm-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: npm install --no-save @playwright/test
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start local test server
+        run: python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/portfolio-http.log 2>&1 &
+      - name: Run CRM browser tests
+        run: npx playwright test tests/crm.e2e.spec.mjs --reporter=line
