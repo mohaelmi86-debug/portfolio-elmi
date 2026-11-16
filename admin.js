@@ -66,6 +66,7 @@ async function convertClient(leadId,button){
 function renderClients(){
  const root=$("leads-list");root.replaceChildren();const term=$("search").value.trim().toLowerCase();
  const filtered=leads.filter(c=>[c.name,c.email,c.organization,c.phone,c.notes].join(" ").toLowerCase().includes(term));
+ if(!term){const add=node("button","button button-primary","＋ Ajouter un client");add.type="button";add.addEventListener("click",()=>addClientManually(add));root.append(add);}
  if(!filtered.length){root.append(node("div","panel lead-card",term?"Aucun résultat sur cette page.":"Aucun client enregistré."));return;}
  filtered.forEach(c=>{
   const card=node("article","lead-card"),top=node("div","lead-top"),left=node("div","");
@@ -79,6 +80,13 @@ function renderClients(){
   const save=node("button","button button-primary","Enregistrer la fiche");save.type="button";save.addEventListener("click",()=>updateClient(c.id,{...Object.fromEntries(fields.map(([k,i])=>[k,i.value.trim()])),notes:notes.value,status:status.value},save));
   form.append(save);card.append(form);root.append(card);
  });
+}
+async function addClientManually(button){
+ button.disabled=true;
+ try{const {data:{session}}=await client.auth.getSession();if(!session)throw new Error("Session expirée.");
+ const res=await fetch(cfg.supabaseUrl+"/functions/v1/admin-leads",{method:"POST",headers:{Authorization:"Bearer "+session.access_token,apikey:cfg.supabaseAnonKey,"Content-Type":"application/json"},body:JSON.stringify({action:"create_client",name:"Nouveau client"})});
+ const body=await res.json();if(!res.ok)throw new Error(body.error||"Création impossible.");await loadLeads();
+ }catch(e){feedback("load-message",e.message||"Erreur réseau.",true);}finally{button.disabled=false;}
 }
 async function updateClient(id,patch,button){
  button.disabled=true;
