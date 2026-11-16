@@ -43,6 +43,13 @@ Deno.serve(async (req) => {
   }
 
   const db = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } });
+  if (req.method === "GET" && urlSafe(req.url,"payments") === "1") {
+    const documentId=urlSafe(req.url,"document_id");
+    if(!documentId||!/^[0-9a-f-]{36}$/i.test(documentId))return json({error:"Document invalide."},400,origin);
+    const {data,error}=await db.from("crm_payments").select("id,document_id,amount,payment_date,payment_method,reference,notes,created_at").eq("document_id",documentId).order("payment_date",{ascending:false}).limit(100);
+    if(error)return json({error:"Paiements indisponibles."},500,origin);
+    return json({data},200,origin);
+  }
   if (req.method === "GET" && urlSafe(req.url, "documents") === "1") {
     const clientId=urlSafe(req.url,"client_id");
     if(!clientId||!/^[0-9a-f-]{36}$/i.test(clientId))return json({error:"Client invalide."},400,origin);
@@ -76,6 +83,24 @@ Deno.serve(async (req) => {
 
   let payload: Record<string, unknown>;
   try { payload = await req.json(); } catch { return json({ error: "JSON invalide." }, 400); }
+  if (req.method === "POST" && payload.action === "create_payment") {
+    const documentId=typeof payload.document_id==="string"?payload.document_id:"";
+    const amount=Number(payload.amount),method=String(payload.payment_method??"");
+    const paymentDate=typeof payload.payment_date==="string"?payload.payment_date:"";
+    const reference=typeof payload.reference==="string"?payload.reference.trim():"";
+    const notes=typeof payload.notes==="string"?payload.notes.trim():"";
+    if(!/^[0-9a-f-]{36}$/i.test(documentId)||!Number.isFinite(amount)||amount<=0||amount>1e9||!["transfer","card","cash","check","sepa","paypal","other"].includes(method)||(paymentDate&&!/^\d{4}-\d{2}-\d{2}$/.test(paymentDate))||reference.length>255||notes.length>2000)return json({error:"Données de paiement invalides."},400,origin);
+    const {data:doc,error:docErr}=await db.from("crm_documents").select("id,amount,document_type,status").eq("id",documentId).single();
+    if(docErr||!doc||doc.document_type!=="invoice"||doc.status==="cancelled")return json({error:"Paiement réservé à une facture valide."},400,origin);
+    const {data:existing,error:sumErr}=await db.from("crm_payments").select("amount").eq("document_id",documentId);
+    if(sumErr)return json({error:"Vérification des paiements impossible."},500,origin);
+    const paid=(existing||[]).reduce((n,p)=>n+Number(p.amount),0);
+    if(paid+amount>Number(doc.amount)+0.005)return json({error:"Le paiement dépasse le solde de la facture."},400,origin);
+    const {data,error}=await db.from("crm_payments").insert({document_id:documentId,amount,payment_method:method,payment_date:paymentDate||new Date().toISOString().slice(0,10),reference:reference||null,notes:notes||null,created_by:user.email}).select("id,document_id,amount,payment_date,payment_method,reference,notes,created_at").single();
+    if(error)return json({error:"Enregistrement du paiement impossible."},500,origin);
+    if(paid+amount>=Number(doc.amount)-0.005)await db.from("crm_documents").update({status:"paid",updated_at:new Date().toISOString()}).eq("id",documentId);
+    return json({data,paid_total:paid+amount,remaining:Math.max(0,Number(doc.amount)-paid-amount)},201,origin);
+  }
   if (req.method === "POST" && payload.action === "create_document") {
     const clientId=typeof payload.client_id==="string"?payload.client_id:"";
     const type=String(payload.document_type??"");
