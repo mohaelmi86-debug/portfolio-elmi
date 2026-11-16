@@ -78,7 +78,20 @@ function renderClients(){
   const notesLabel=node("label","notes-label","Notes client");const notes=node("textarea","notes-input");notes.rows=3;notes.maxLength=5000;notes.value=c.notes||"";form.append(notesLabel,notes);
   const statusWrap=node("label","amount-field","Statut"),status=node("select");[["active","Actif"],["inactive","Inactif"]].forEach(([v,l])=>{const o=node("option","",l);o.value=v;o.selected=c.status===v;status.append(o);});statusWrap.append(status);form.append(statusWrap);
   const save=node("button","button button-primary","Enregistrer la fiche");save.type="button";save.addEventListener("click",()=>updateClient(c.id,{...Object.fromEntries(fields.map(([k,i])=>[k,i.value.trim()])),notes:notes.value,status:status.value},save));
-  form.append(save);card.append(form);root.append(card);
+  form.append(save);card.append(form);
+  const detailsBox=node("details","client-interactions"),summary=node("summary","","Historique & échanges");detailsBox.append(summary);
+  const interactionForm=node("div","lead-followup"),typeSelect=node("select");
+  [["call","Appel"],["email","E-mail"],["meeting","Réunion"],["note","Note"],["other","Autre"]].forEach(([v,l])=>{const o=node("option","",l);o.value=v;typeSelect.append(o);});
+  const titleInput=node("input");titleInput.placeholder="Objet de l’échange";titleInput.maxLength=255;
+  const detailInput=node("textarea","notes-input");detailInput.rows=2;detailInput.maxLength=5000;detailInput.placeholder="Compte rendu / détails";
+  const dateInput=node("input");dateInput.type="datetime-local";dateInput.setAttribute("aria-label","Date de l’échange");dateInput.value=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
+  const addInteraction=node("button","button button-primary","Ajouter l’échange");addInteraction.type="button";
+  const historyRoot=node("div","client-history");historyRoot.textContent="Ouvrez cette section pour charger l’historique.";
+  let historyLoaded=false;
+  const loadInteractions=async()=>{historyRoot.textContent="Chargement…";try{const {data:{session}}=await client.auth.getSession();const rr=await fetch(cfg.supabaseUrl+"/functions/v1/admin-leads?interactions=1&client_id="+encodeURIComponent(c.id),{headers:{Authorization:"Bearer "+session.access_token,apikey:cfg.supabaseAnonKey}});const jj=await rr.json();if(!rr.ok)throw new Error(jj.error||"Historique indisponible.");historyRoot.replaceChildren();(jj.data||[]).forEach(it=>{const item=node("article","client-history-item");item.append(node("strong","",new Date(it.occurred_at).toLocaleString("fr-FR")+" · "+({call:"Appel",email:"E-mail",meeting:"Réunion",note:"Note",other:"Autre"}[it.interaction_type]||it.interaction_type)),node("div","",it.title),node("p","",it.details||""));historyRoot.append(item);});if(!jj.data?.length)historyRoot.textContent="Aucun échange enregistré.";historyLoaded=true;}catch(err){historyRoot.textContent=err.message||"Erreur historique";}};
+  detailsBox.addEventListener("toggle",()=>{if(detailsBox.open&&!historyLoaded)loadInteractions();});
+  addInteraction.addEventListener("click",async()=>{addInteraction.disabled=true;try{const {data:{session}}=await client.auth.getSession();if(!session)throw new Error("Session expirée.");const rr=await fetch(cfg.supabaseUrl+"/functions/v1/admin-leads",{method:"POST",headers:{Authorization:"Bearer "+session.access_token,apikey:cfg.supabaseAnonKey,"Content-Type":"application/json"},body:JSON.stringify({action:"create_interaction",client_id:c.id,interaction_type:typeSelect.value,title:titleInput.value,details:detailInput.value,occurred_at:dateInput.value?new Date(dateInput.value).toISOString():null})});const jj=await rr.json();if(!rr.ok)throw new Error(jj.error||"Ajout impossible.");titleInput.value="";detailInput.value="";feedback("load-message","Échange client enregistré.");historyLoaded=false;await loadInteractions();}catch(err){feedback("load-message",err.message||"Erreur",true);}finally{addInteraction.disabled=false;}});
+  interactionForm.append(typeSelect,titleInput,dateInput,detailInput,addInteraction);detailsBox.append(interactionForm,historyRoot);card.append(detailsBox);root.append(card);
  });
 }
 async function addClientManually(button){
