@@ -25,3 +25,19 @@ jobs:
           for file in *.js; do
             [ -f "$file" ] && node --check "$file"
           done
+
+  crm-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: npm install --no-save @playwright/test
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start local test server
+        run: python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/portfolio-http.log 2>&1 &
+      - name: Run CRM browser tests
+        run: npx playwright test tests/crm.e2e.spec.mjs --reporter=line
