@@ -6,9 +6,10 @@ const isAllowedOrigin = (origin: string | null) => !!origin && (
   (origin.startsWith("https://deploy-preview-") && origin.endsWith("--elmihdhoirmohamedali.netlify.app"))
 );
 const corsHeaders = (origin: string | null) => ({
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": origin ?? "https://elmihdhoirm Mohamedali.netlify.app",
+  "Vary": "Origin",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, PATCH, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, PATCH, POST, OPTIONS",
 
 });
 const json = (body: unknown, status = 200, origin: string | null = null) => new Response(JSON.stringify(body), {
@@ -22,7 +23,7 @@ Deno.serve(async (req) => {
     if (origin && !isAllowedOrigin(origin)) return new Response(null, { status: 403, headers: corsHeaders(origin) });
     return new Response(null, { status: 204, headers: corsHeaders(origin) });
   }
-  if (!["GET", "PATCH"].includes(req.method)) return json({ error: "Méthode non autorisée." }, 405);
+  if (!["GET", "PATCH", "POST"].includes(req.method)) return json({ error: "Méthode non autorisée." }, 405);
 
   const url = Deno.env.get("SUPABASE_URL");
   const anon = Deno.env.get("SUPABASE_ANON_KEY");
@@ -42,6 +43,13 @@ Deno.serve(async (req) => {
   }
 
   const db = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } });
+  if (req.method === "GET" && urlSafe(req.url, "interactions") === "1") {
+    const clientId = urlSafe(req.url, "client_id");
+    if (!clientId || !/^[0-9a-f-]{36}$/i.test(clientId)) return json({ error: "Client invalide." }, 400, origin);
+    const { data, error } = await db.from("crm_interactions").select("id,client_id,interaction_type,title,details,occurred_at,created_by,created_at").eq("client_id", clientId).order("occurred_at", { ascending: false }).limit(100);
+    if (error) return json({ error: "Historique client indisponible." }, 500, origin);
+    return json({ data }, 200, origin);
+  }
   if (req.method === "GET") {
     const page = Math.max(0, Number(urlSafe(req.url, "page") ?? 0) || 0);
     const size = Math.min(100, Math.max(1, Number(urlSafe(req.url, "size") ?? 25) || 25));
@@ -61,6 +69,17 @@ Deno.serve(async (req) => {
 
   let payload: Record<string, unknown>;
   try { payload = await req.json(); } catch { return json({ error: "JSON invalide." }, 400); }
+  if (req.method === "POST" && payload.action === "create_interaction") {
+    const clientId = typeof payload.client_id === "string" ? payload.client_id : "";
+    const type = String(payload.interaction_type ?? "");
+    const title = typeof payload.title === "string" ? payload.title.trim() : "";
+    const details = typeof payload.details === "string" ? payload.details.trim() : "";
+    const occurredAt = typeof payload.occurred_at === "string" ? payload.occurred_at : "";
+    if (!/^[0-9a-f-]{36}$/i.test(clientId) || !["call","email","meeting","note","other"].includes(type) || !title || title.length > 255 || details.length > 5000 || (occurredAt && Number.isNaN(Date.parse(occurredAt)))) return json({ error: "Données d’interaction invalides." }, 400, origin);
+    const { data, error } = await db.from("crm_interactions").insert({ client_id: clientId, interaction_type: type, title, details: details || null, occurred_at: occurredAt || new Date().toISOString(), created_by: user.email }).select("id,client_id,interaction_type,title,details,occurred_at,created_by,created_at").single();
+    if (error) return json({ error: "Enregistrement de l’interaction impossible." }, 500, origin);
+    return json({ data }, 201, origin);
+  }
   if (payload.action === "dashboard") {
     const { data: rows, error } = await db.from("contact_leads").select("pipeline_stage,estimated_amount,proposal_amount,signed_amount,next_action_at");
     if (error) return json({ error: "Calcul des indicateurs impossible." }, 500);
