@@ -18,6 +18,8 @@ jobs:
         run: node --check admin.js
       - name: CRM DOM and security smoke checks
         run: node scripts/portfolio-smoke.mjs
+      - name: CRM regression suite
+        run: node --test tests/*.test.mjs
       - name: Check public JavaScript syntax
         run: |
           for file in *.js; do
