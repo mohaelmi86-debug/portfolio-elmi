@@ -135,3 +135,4 @@ async function updateClient(id,patch,button){
  const body=await res.json();if(!res.ok)throw new Error(body.error||"Modification impossible.");
  feedback("load-message","Fiche client enregistrée.");await loadLeads();
  }catch(e){feedback("load-message",e.message||"Erreur réseau.",true);button.disabled=false;}
+}
