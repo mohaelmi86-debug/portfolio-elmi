@@ -9,7 +9,7 @@ const edge = read("supabase/functions/admin-leads/index.ts");
 
 test("CRM page includes the main authenticated workspace and navigation", () => {
   for (const id of ["login-form", "crm-panel", "leads-list", "clients-view", "export-csv", "pipeline-bars"]) {
-    assert.match(html, new RegExp('id=["\\']' + id + '["\\']'), `Missing ${id}`);
+    assert.ok(html.includes(`id="${id}"`) || html.includes(`id='${id}'`), `Missing ${id}`);
   }
 });
 
