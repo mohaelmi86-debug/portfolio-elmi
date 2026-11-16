@@ -211,7 +211,7 @@ $("clients-view").addEventListener("click",()=>{clientsMode=!clientsMode;page=0;
 $("status-filter").addEventListener("change",()=>{page=0;loadLeads();});$("search").addEventListener("input",renderLeads);
 if(!client)feedback("login-message","Ajoutez la clé anon publique dans admin-config.js pour activer la connexion.",true);else client.auth.getSession().then(({data})=>{showSession(data.session?.user||null);if(data.session)loadLeads();});
 
-function money(v){return new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(Number(v||0));}
+function escapeHtml(value){const el=document.createElement("div");el.textContent=String(value??"");return el.innerHTML;}\nfunction money(v){return new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(Number(v||0));}
 function renderPipeline(stats,total){
   const root=$("pipeline-bars");
   if(!root)return;
