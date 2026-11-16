@@ -138,6 +138,11 @@ async function updateClient(id,patch,button){
  }catch(e){feedback("load-message",e.message||"Erreur réseau.",true);button.disabled=false;}
 }
 
+function exportCsv(){
+ const cols=clientsMode?[["name","Nom"],["email","E-mail"],["organization","Organisation"],["phone","Téléphone"],["created_at","Créé le"]]:[["name","Nom"],["email","E-mail"],["organization","Organisation"],["status","Statut"],["pipeline_stage","Étape"],["estimated_amount","Valeur estimée"],["proposal_amount","Proposition"],["signed_amount","CA signé"],["created_at","Créé le"]];
+ const quote=v=>'"'+String(v??"").replace(/"/g,'""')+'"';const csv="\\uFEFF"+[cols.map(x=>quote(x[1])).join(";"),...leads.map(row=>cols.map(([k])=>quote(row[k])).join(";"))].join("\\r\\n");
+ const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=(clientsMode?"clients":"demandes")+"-portfolio-"+new Date().toISOString().slice(0,10)+".csv";document.body.append(a);a.click();a.remove();URL.revokeObjectURL(url);
+}
 function escapeHtml(value){return String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/\'/g,"&#39;");}
 function money(v){return new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(Number(v||0));}
 
