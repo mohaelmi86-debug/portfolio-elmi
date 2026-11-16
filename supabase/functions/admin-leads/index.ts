@@ -46,6 +46,11 @@ Deno.serve(async (req) => {
   }
 
   const db = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } });
+  if (req.method === "GET" && urlSafe(req.url, "clients") === "1") {
+    const { data, error } = await db.from("crm_clients").select("id,lead_id,name,email,organization,phone,notes,status,created_at").order("created_at",{ascending:false}).limit(500);
+    if(error)return json({error:"Lecture des clients impossible."},500,origin);
+    return json({data,count:data?.length??0,page:0,size:500},200,origin);
+  }
   if (req.method === "GET" && urlSafe(req.url,"finance") === "1") {
     const [{data:docs,error:de},{data:pays,error:pe}]=await Promise.all([
       db.from("crm_documents").select("id,document_type,status,amount,issue_date,due_date,reference,title,client_id").order("issue_date",{ascending:false}).limit(1000),
@@ -101,6 +106,30 @@ Deno.serve(async (req) => {
 
   let payload: Record<string, unknown>;
   try { payload = await req.json(); } catch { return json({ error: "JSON invalide." }, 400); }
+  if (req.method === "POST" && payload.action === "create_client") {
+    const name=typeof payload.name==="string"?payload.name.trim():"";
+    const email=typeof payload.email==="string"?payload.email.trim().toLowerCase():"";
+    const organization=typeof payload.organization==="string"?payload.organization.trim():"";
+    const phone=typeof payload.phone==="string"?payload.phone.trim():"";
+    const notes=typeof payload.notes==="string"?payload.notes.trim():"";
+    if(name.length<2||name.length>160||email.length>254||organization.length>160||phone.length>40||notes.length>5000)return json({error:"Nom obligatoire (2 à 160 caractères) ; vérifiez les autres champs."},400,origin);
+    const {data,error}=await db.from("crm_clients").insert({name,email:email||null,organization:organization||null,phone:phone||null,notes:notes||null}).select("id,name,email,organization,phone,notes,status,created_at").single();
+    if(error)return json({error:"Création client impossible : "+error.message.slice(0,180)},500,origin);
+    return json({data},201,origin);
+  }
+  if (req.method === "PATCH" && payload.action === "update_client") {
+    const clientId=typeof payload.client_id==="string"?payload.client_id:"";
+    if(!/^[0-9a-f-]{36}$/i.test(clientId))return json({error:"Client invalide."},400,origin);
+    const patch={updated_at:new Date().toISOString()};
+    for(const key of ["name","email","organization","phone","notes","status"])if(key in payload)patch[key]=payload[key];
+    if(typeof patch.name==="string")patch.name=patch.name.trim();
+    if(typeof patch.email==="string")patch.email=patch.email.trim().toLowerCase()||null;
+    if(typeof patch.name!=="string"||patch.name.length<2||patch.name.length>160)return json({error:"Nom client invalide."},400,origin);
+    if("status" in patch&&!["active","inactive"].includes(String(patch.status)))return json({error:"Statut client invalide."},400,origin);
+    const {data,error}=await db.from("crm_clients").update(patch).eq("id",clientId).select("id,name,email,organization,phone,notes,status,created_at").single();
+    if(error)return json({error:"Modification client impossible : "+error.message.slice(0,160)},500,origin);
+    return json({data},200,origin);
+  }
   if (req.method === "POST" && payload.action === "create_payment") {
     const documentId=typeof payload.document_id==="string"?payload.document_id:"";
     const amount=Number(payload.amount),method=String(payload.payment_method??"");
