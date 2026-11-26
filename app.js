@@ -2,8 +2,9 @@
   "use strict";
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-  const state = { profile: null, projects: [], skills: [], journey: [], trainings: [], category: "Tous", query: "", visible: new Set() };
+  const state = { profile: null, projects: [], services: [], skills: [], journey: [], trainings: [], category: "Tous", query: "", visible: new Set() };
   const storageKey = "portfolio-elmi-visible-projects-v1";
+  const projectLogos = { kollecta: "assets/kollecta-mark.svg" };
   const icons = { Finance:"▥", Lecture:"▣", Industrie:"⚙", Éducation:"✦", Commerce:"◇", Laboratoire:"⌕", Santé:"✚", Fintech:"◈", Impact:"♻", Construction:"⌂", Data:"⌗", Innovation:"✧" };
 
   async function loadXML(path) {
@@ -37,6 +38,34 @@
       tech: xmlItems(p, "technologies > item"), business: xmlText(p, "businessModel"),
       next: xmlText(p, "nextSteps"), tags: xmlItems(p, "tags > item")
     }));
+  }
+  function parseServices(xml) {
+    return [...xml.querySelectorAll("services > service")].map(item => ({
+      id: item.getAttribute("id") || "", icon: xmlText(item, "icon"),
+      name: xmlText(item, "name"), tagline: xmlText(item, "tagline"),
+      description: xmlText(item, "description"),
+      deliverables: xmlItems(item, "deliverables > item"),
+      price: xmlText(item, "price"), cta: xmlText(item, "cta")
+    }));
+  }
+  function renderServices() {
+    const root = $("#services-grid");
+    if (!root) return;
+    root.replaceChildren();
+    state.services.forEach(service => {
+      const card = node("article", "service-card");
+      card.append(node("div", "service-icon", service.icon || "✦"));
+      card.append(node("h3", "", service.name));
+      card.append(node("p", "service-tagline", service.tagline));
+      card.append(node("p", "service-description", service.description));
+      const list = node("ul", "service-deliverables");
+      (service.deliverables || []).forEach(item => list.append(node("li", "", item)));
+      card.append(list);
+      const bottom = node("div", "service-bottom");
+      bottom.append(node("span", "service-price", service.price || "Sur devis"));
+      const link = node("a", "service-cta", service.cta || "Discuter ↗");
+      link.href = "#contact"; bottom.append(link); card.append(bottom); root.append(card);
+    });
   }
   function parseSkills(xml) {
     return [...xml.querySelectorAll("skill-groups > group")].map(group => ({
@@ -174,7 +203,15 @@
   function createProjectCard(project) {
     const card = node("article", "project-card");
     const top = node("div", "card-topline");
-    top.append(node("div", "project-icon", iconFor(project)), node("span", "project-category", project.category || "Projet"));
+    const logoPath = projectLogos[project.id];
+    if (logoPath) {
+      const logo = document.createElement("img");
+      logo.className = "project-icon project-logo";
+      logo.src = logoPath; logo.alt = "Logo " + project.name;
+      logo.width = 42; logo.height = 42; logo.loading = "lazy";
+      top.append(logo);
+    } else top.append(node("div", "project-icon", iconFor(project)));
+    top.append(node("span", "project-category", project.category || "Projet"));
     const title = node("h3", "", project.name);
     const desc = node("p", "", project.description || project.lead || "");
     const tags = node("div", "card-tags");
@@ -281,39 +318,34 @@
     $$("#mobile-nav a").forEach(a => a.addEventListener("click", () => {
       $("#mobile-nav").classList.remove("open"); $("#mobile-menu").setAttribute("aria-expanded", "false"); $("#mobile-menu").textContent = "☰";
     }));
-    $("#investor-form").addEventListener("submit", event => {
+    $("#investor-form").addEventListener("submit", async event => {
       event.preventDefault();
-      const form = new FormData(event.currentTarget);
-      const email = state.profile.email;
-      if (!email) {
-        $("#investor-result").textContent = "Adresse de réception non configurée. Ajoute ton adresse professionnelle dans data/profile.json pour activer l’envoi de la demande.";
-        return;
-      }
-      const body = [
-        "Manifestation d’intérêt — Portfolio El-Mihdhoir MOHAMED ALI", "",
-        "Nom / organisation : " + form.get("name"),
-        "E-mail : " + form.get("email"),
-        "Type : " + form.get("interest"),
-        "Projet : " + form.get("project"),
-        "Fourchette : " + form.get("amount"),
-        "Délai : " + form.get("timing"),
-        "Message : " + (form.get("message") || "—")
-      ].join("\n");
-      $("#investor-result").textContent = "Votre application e-mail va s’ouvrir avec votre demande préremplie. Vérifiez l’adresse destinataire avant l’envoi.";
-      window.location.href = "mailto:" + encodeURIComponent(email) + "?subject=" + encodeURIComponent("Intérêt — " + form.get("project")) + "&body=" + encodeURIComponent(body);
-    });
+      const formEl = event.currentTarget, submit = formEl.querySelector('button[type="submit"]'), result = $("#investor-result"), form = new FormData(formEl);
+      const typeMap = { "Partenariat":"partenariat", "Investissement":"investissement", "Collaboration":"collaboration", "Accompagnement":"collaboration" };
+      const message = String(form.get("message") || "").trim() || "Je souhaite être recontacté pour échanger sur cette demande.";
+      const payload = { name:form.get("name"), email:form.get("email"), request_type:typeMap[form.get("interest")]||"autre", project_slug:String(form.get("project")||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""), budget_range:form.get("amount"), timeline:form.get("timing"), message, consent:form.get("consent")==="on", website:form.get("website")||"" };
+      submit.disabled=true; submit.textContent="Envoi en cours…"; result.textContent="";
+      try {
+        const response=await fetch("https://zmsbdetlnjrpwvbyajcw.supabase.co/functions/v1/submit-lead",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+        const data=await response.json().catch(()=>({}));
+        if(!response.ok||!data.ok) throw new Error(data.error||"Envoi impossible.");
+        result.textContent="Merci ! Votre demande a bien été enregistrée. Je reviendrai vers vous."; formEl.reset();
+      } catch(error) {
+        result.textContent="L’envoi a échoué : "+(error.message||"erreur réseau")+". Vous pouvez écrire directement à "+(state.profile.email||"l’adresse de contact du portfolio")+".";
+      } finally { submit.disabled=false; submit.innerHTML="Envoyer ma demande <b>↗</b>"; }
+    });;
   }
   async function init() {
     try {
-      const [profileXML, projectsXML, skillsXML, journeyXML, trainingsXML] = await Promise.all([
-        loadXML("data/profile.xml"), loadXML("data/projects.xml"), loadXML("data/skills.xml"), loadXML("data/journey.xml"), loadXML("data/formations.xml")
+      const [profileXML, projectsXML, servicesXML, skillsXML, journeyXML, trainingsXML] = await Promise.all([
+        loadXML("data/profile.xml"), loadXML("data/projects.xml"), loadXML("data/services.xml"), loadXML("data/skills.xml"), loadXML("data/journey.xml"), loadXML("data/formations.xml")
       ]);
       state.profile = parseProfile(profileXML);
       state.projects = parseProjects(projectsXML);
       state.skills = parseSkills(skillsXML);
       state.journey = parseJourney(journeyXML);
       state.trainings = parseTrainings(trainingsXML);
-      safeSavedSelection(); renderProfile(); renderSkills(); renderJourney(); renderTrainings(); buildFilters(); renderPicker(); renderProjects(); populateInvestorProjects(); bindInteractions();
+      safeSavedSelection(); renderProfile(); renderServices(); renderSkills(); renderJourney(); renderTrainings(); buildFilters(); renderPicker(); renderProjects(); populateInvestorProjects(); bindInteractions();
       $("#year").textContent = new Date().getFullYear();
     } catch (error) {
       console.error(error);

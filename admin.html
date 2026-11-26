@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>CRM · PORFOLIO</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <main class="admin-shell">
+    <header class="admin-header">
+      <a class="brand" href="./">PORFOLIO <span>CRM</span></a>
+      <div id="session-actions" hidden><span id="admin-email"></span><button id="logout" class="button button-quiet">Déconnexion</button></div>
+    </header>
+    <section id="login-panel" class="panel login-panel">
+      <p class="eyebrow">ESPACE PRIVÉ</p><h1>Connexion administrateur</h1>
+      <p class="muted">Accès réservé aux comptes autorisés.</p>
+      <form id="login-form">
+        <label for="email">Adresse e-mail</label><input id="email" type="email" autocomplete="username" required>
+        <label for="password">Mot de passe</label><input id="password" type="password" autocomplete="current-password" required>
+        <button class="button button-primary" type="submit">Se connecter</button>
+      </form>
+      <p id="login-message" class="feedback" role="status"></p>
+    </section>
+    <section id="crm-panel" hidden>
+      <div class="welcome"><div><p class="eyebrow">TABLEAU DE BORD</p><h1 id="crm-title">Demandes entrantes</h1><p class="muted">Suivi des contacts et opportunités commerciales.</p></div><div class="admin-actions"><button id="export-csv" class="button button-quiet">⇩ Export CSV</button><button id="refresh" class="button button-quiet">↻ Actualiser</button></div></div>
+      <div class="stats"><article class="stat"><span>Total</span><strong id="total-count">—</strong></article><article class="stat"><span>À traiter</span><strong id="new-count">—</strong></article><article class="stat"><span>Affichées</span><strong id="shown-count">—</strong></article></div><div id="finance-kpis" class="stats crm-kpis" hidden><article class="stat"><span>Facturé</span><strong id="fin-invoiced">—</strong></article><article class="stat"><span>Encaissé</span><strong id="fin-collected">—</strong></article><article class="stat"><span>À encaisser</span><strong id="fin-outstanding">—</strong></article><article class="stat"><span>Impayés échus</span><strong id="fin-overdue">—</strong></article><article class="stat"><span>Devis cumulés</span><strong id="fin-quotes">—</strong></article></div><div class="stats crm-kpis"><article class="stat"><span>Nouveaux prospects</span><strong id="kpi-new">—</strong></article><article class="stat"><span>Contactés</span><strong id="kpi-contacted">—</strong></article><article class="stat"><span>Qualifiés</span><strong id="kpi-qualified">—</strong></article><article class="stat"><span>Propositions</span><strong id="kpi-proposal">—</strong></article><article class="stat"><span>Gagnés</span><strong id="kpi-won">—</strong></article><article class="stat"><span>Perdus</span><strong id="kpi-lost">—</strong></article><article class="stat"><span>Conversion</span><strong id="kpi-conversion">—</strong></article><article class="stat"><span>Relances en retard</span><strong id="kpi-late">—</strong></article><article class="stat"><span>Valeur estimée (€)</span><strong id="kpi-estimate">—</strong></article><article class="stat"><span>Propositions (€)</span><strong id="kpi-proposals-eur">—</strong></article><article class="stat"><span>CA signé (€)</span><strong id="kpi-revenue">—</strong></article></div><section class="pipeline panel"><div class="pipeline-heading"><strong>Répartition du pipeline</strong><span class="muted">Vue globale des opportunités</span></div><div id="pipeline-bars" class="pipeline-bars" aria-label="Répartition commerciale"></div></section>
+      <div class="toolbar"><button id="clients-view" class="button button-quiet" type="button">👥 Clients gagnés</button><label class="sr-only" for="status-filter">Filtrer par statut</label><select id="status-filter"><option value="">Tous les statuts</option><option value="new">Nouveau</option><option value="in_progress">En cours</option><option value="qualified">Qualifié</option><option value="closed">Clôturé</option><option value="spam">Spam</option></select><input id="search" type="search" placeholder="Rechercher nom, e-mail, message…"><span id="load-message" role="status"></span></div>
+      <div id="leads-list" class="leads-list"></div>
+      <div class="pagination"><button id="previous" class="button button-quiet">← Précédent</button><span id="page-label">Page 1</span><button id="next" class="button button-quiet">Suivant →</button></div>
+    </section>
+    <footer>PORFOLIO · CRM privé · Accès protégé par Supabase Auth</footer>
+  </main>
+  <script src="admin-config.js"></script>
+  <script type="module" src="admin.js"></script>
+</body></html>
