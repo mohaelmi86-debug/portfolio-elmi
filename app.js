@@ -4,6 +4,7 @@
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const state = { profile: null, projects: [], services: [], skills: [], journey: [], trainings: [], category: "Tous", query: "", visible: new Set() };
   const storageKey = "portfolio-elmi-visible-projects-v1";
+  const projectLogos = { kollecta: "assets/kollecta-mark.svg" };
   const icons = { Finance:"▥", Lecture:"▣", Industrie:"⚙", Éducation:"✦", Commerce:"◇", Laboratoire:"⌕", Santé:"✚", Fintech:"◈", Impact:"♻", Construction:"⌂", Data:"⌗", Innovation:"✧" };
 
   async function loadXML(path) {
@@ -202,7 +203,15 @@
   function createProjectCard(project) {
     const card = node("article", "project-card");
     const top = node("div", "card-topline");
-    top.append(node("div", "project-icon", iconFor(project)), node("span", "project-category", project.category || "Projet"));
+    const logoPath = projectLogos[project.id];
+    if (logoPath) {
+      const logo = document.createElement("img");
+      logo.className = "project-icon project-logo";
+      logo.src = logoPath; logo.alt = "Logo " + project.name;
+      logo.width = 42; logo.height = 42; logo.loading = "lazy";
+      top.append(logo);
+    } else top.append(node("div", "project-icon", iconFor(project)));
+    top.append(node("span", "project-category", project.category || "Projet"));
     const title = node("h3", "", project.name);
     const desc = node("p", "", project.description || project.lead || "");
     const tags = node("div", "card-tags");
